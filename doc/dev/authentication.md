@@ -15,7 +15,8 @@ Proto файл: `proto/authorization.proto`
 ```protobuf
 message User {
   string id
-  string username
+  string name
+  string slug
   string email
   string avatar_url
   string banner_url

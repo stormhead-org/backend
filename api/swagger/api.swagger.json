@@ -4579,8 +4579,8 @@
           "title": "3-300 chars"
         },
         "content": {
-          "type": "string",
-          "title": "JSON"
+          "type": "object",
+          "title": "JSON structured content"
         }
       }
     },
@@ -5767,8 +5767,8 @@
           "type": "string"
         },
         "content": {
-          "type": "string",
-          "title": "JSON content"
+          "type": "object",
+          "title": "JSON structured content"
         },
         "status": {
           "$ref": "#/definitions/protoPostStatus"
@@ -5808,7 +5808,7 @@
           "type": "string"
         },
         "content": {
-          "type": "string"
+          "type": "object"
         }
       }
     },
@@ -6590,6 +6590,14 @@
         }
       },
       "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",

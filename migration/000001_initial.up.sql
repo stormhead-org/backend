@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS "community" (
     rules TEXT NOT NULL,
     is_banned BOOLEAN,
     ban_reason TEXT,
+    member_count INTEGER DEFAULT 0,
+    post_count INTEGER DEFAULT 0,
+    reputation INTEGER DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -47,10 +50,10 @@ CREATE TABLE IF NOT EXISTS "post" (
     community_id UUID NOT NULL,
     author_id UUID NOT NULL,
     title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    status INTEGER NOT NULL,
-    like_count INTEGER NOT NULL,
-    comment_count INTEGER NOT NULL,
+    content JSONB NOT NULL,
+    status INTEGER,
+    like_count INTEGER,
+    comment_count INTEGER,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     published_at TIMESTAMP NOT NULL

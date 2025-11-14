@@ -16,11 +16,11 @@ Proto файл: `proto/post.proto`
 message Post {
   string id
   string author_id
-  string author_username
+  string author_name
   string community_id
   string community_name
   string title
-  google.protobuf.Struct content      // JSON content
+  google.protobuf.Struct content      // Структурированный JSON контент
   PostStatus status                    // draft or published
   int32 like_count
   int32 comment_count
@@ -543,7 +543,7 @@ message ListBookmarksResponse {
 
 ### Формат
 
-Content хранится как `google.protobuf.Struct` - произвольный JSON.
+Content хранится как `google.protobuf.Struct` - произвольный JSON. В ORM модели реализовано как `json.RawMessage` с типом `JSONB` в PostgreSQL. gRPC сервер корректно преобразует `google.protobuf.Struct` в `json.RawMessage` при сохранении и обратно при возврате данных.
 
 ### Рекомендуемая структура
 

@@ -1,15 +1,12 @@
 env:
-	go get -tool github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
-	go get -tool github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
-	go get -tool google.golang.org/protobuf/cmd/protoc-gen-go
-	go get -tool google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	go install tool
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 generate-proto:
-	protoc \
+	export PATH=$$PATH:$$HOME/go/bin && protoc \
 		--proto_path=proto \
-		--proto_path=$(shell go list -f '{{ .Dir }}' -m github.com/grpc-ecosystem/grpc-gateway) \
-		--proto_path=$(shell go list -f '{{ .Dir }}' -m github.com/grpc-ecosystem/grpc-gateway)/third_party/googleapis \
 		--go_out=./internal/proto \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=./internal/proto \

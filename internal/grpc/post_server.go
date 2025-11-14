@@ -2,11 +2,13 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
@@ -53,12 +55,21 @@ func (s *PostServer) Create(ctx context.Context, request *protopkg.CreatePostReq
 		s.log.Error("internal error", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "")
 	}
+	var content []byte
+	if request.Content != nil {
+		jsonBytes, err := request.Content.MarshalJSON()
+		if err != nil {
+			s.log.Error("failed to marshal content to JSON", zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "failed to process content")
+		}
+		content = jsonBytes
+	}
 
 	post := &ormpkg.Post{
 		CommunityID: communityUUID,
 		AuthorID:    userID,
 		Title:       request.Title,
-		Content:     request.Content,
+		Content:     content,
 		Status:      0,
 	}
 
@@ -82,15 +93,27 @@ func (s *PostServer) Get(ctx context.Context, request *protopkg.GetPostRequest) 
 		return nil, status.Errorf(codes.Internal, "")
 	}
 
-	userID, err := middlewarepkg.GetUserUUID(ctx)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "")
-	}
-
-	if post.AuthorID != userID {
-		s.log.Error("wrong post ownership")
-		return nil, status.Errorf(codes.PermissionDenied, "not an owner")
+	// Преобразование json.RawMessage в google.protobuf.Struct
+	var structContent *structpb.Struct
+	if len(post.Content) > 0 {
+		var contentInterface interface{}
+		if err := json.Unmarshal(post.Content, &contentInterface); err != nil {
+			s.log.Error("failed to unmarshal content from JSON", zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "failed to process content")
+		}
+		if contentStruct, ok := contentInterface.(map[string]interface{}); ok {
+			structContent, err = structpb.NewStruct(contentStruct)
+			if err != nil {
+				s.log.Error("failed to create structpb struct from content", zap.Error(err))
+				return nil, status.Errorf(codes.Internal, "failed to process content")
+			}
+		} else {
+			structContent, err = structpb.NewStruct(map[string]interface{}{"value": contentInterface})
+			if err != nil {
+				s.log.Error("failed to create structpb struct from content", zap.Error(err))
+				return nil, status.Errorf(codes.Internal, "failed to process content")
+			}
+		}
 	}
 
 	return &protopkg.GetPostResponse{
@@ -101,7 +124,7 @@ func (s *PostServer) Get(ctx context.Context, request *protopkg.GetPostRequest) 
 			AuthorId:      post.AuthorID.String(),
 			AuthorName:    post.Author.Name,
 			Title:         post.Title,
-			Content:       post.Content,
+			Content:       structContent,
 			Status:        protopkg.PostStatus(post.Status),
 			CreatedAt:     timestamppb.New(post.CreatedAt),
 			UpdatedAt:     timestamppb.New(post.UpdatedAt),
@@ -133,7 +156,16 @@ func (s *PostServer) Update(ctx context.Context, request *protopkg.UpdatePostReq
 	}
 
 	post.Title = request.Title
-	post.Content = request.Content
+	
+	// Преобразование google.protobuf.Struct в json.RawMessage
+	if request.Content != nil {
+		jsonBytes, err := request.Content.MarshalJSON()
+		if err != nil {
+			s.log.Error("failed to marshal content to JSON", zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "failed to process content")
+		}
+		post.Content = jsonBytes
+	}
 
 	err = s.database.UpdatePost(post)
 	if err != nil {

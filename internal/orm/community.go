@@ -17,6 +17,9 @@ type Community struct {
 	Rules       string
 	IsBanned    bool
 	BanReason   string
+	MemberCount int       `gorm:"default:0"`
+	PostCount   int       `gorm:"default:0"`
+	Reputation  int       `gorm:"default:0"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -42,6 +45,9 @@ func (c *PostgresClient) SelectCommunityByID(id string) (*Community, error) {
 			"rules",
 			"is_banned",
 			"ban_reason",
+			"member_count",
+			"post_count",
+			"reputation",
 			"created_at",
 			"updated_at",
 		}).
@@ -67,6 +73,9 @@ func (c *PostgresClient) SelectCommunityBySlug(slug string) (*Community, error) 
 			"rules",
 			"is_banned",
 			"ban_reason",
+			"member_count",
+			"post_count",
+			"reputation",
 			"created_at",
 			"updated_at",
 		}).
@@ -92,6 +101,9 @@ func (c *PostgresClient) SelectCommunityByName(name string) (*Community, error) 
 			"rules",
 			"is_banned",
 			"ban_reason",
+			"member_count",
+			"post_count",
+			"reputation",
 			"created_at",
 			"updated_at",
 		}).
@@ -117,6 +129,9 @@ func (c *PostgresClient) SelectCommunitiesWithPagination(owner_id string, limit 
 			"rules",
 			"is_banned",
 			"ban_reason",
+			"member_count",
+			"post_count",
+			"reputation",
 			"created_at",
 			"updated_at",
 		}).

@@ -3,6 +3,8 @@
 /backend
 /backend-*.tgz
 .specify/
-.cursor/
+.qwen/
 specs/
 project.md
+dif.md
+QWEN.md

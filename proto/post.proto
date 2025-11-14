@@ -3,6 +3,7 @@ package proto;
 option go_package = "/proto";
 
 import "entity.proto";
+import "google/protobuf/struct.proto";
 
 import "google/api/annotations.proto";
 
@@ -11,9 +12,9 @@ import "google/api/annotations.proto";
 // ============================================================================
 
 message CreatePostRequest {
-  string community_id = 1;
-  string title        = 2;  // 3-300 chars
-  string content      = 3;  // JSON
+  string community_id                = 1;
+  string title                       = 2;  // 3-300 chars
+  google.protobuf.Struct content     = 3;  // JSON structured content
 }
 
 message CreatePostResponse {}
@@ -35,9 +36,9 @@ message GetPostResponse {
 // ============================================================================
 
 message UpdatePostRequest {
-  string post_id = 1;
-  string title   = 2;
-  string content = 3;
+  string post_id                    = 1;
+  string title                      = 2;
+  google.protobuf.Struct content    = 3;
 }
 
 message UpdatePostResponse {}

@@ -3,6 +3,7 @@ package proto;
 option go_package = "/proto";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 message Community {
   string id                            = 1;
@@ -33,7 +34,7 @@ message Post {
   string author_id                       = 4;
   string author_name                     = 5;
   string title                           = 6;
-  string content                         = 7;  // JSON content
+  google.protobuf.Struct content         = 7;  // JSON structured content
   PostStatus status                      = 8;
   int32 like_count                       = 9;
   int32 comment_count                    = 10;

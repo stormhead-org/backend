@@ -16,7 +16,7 @@ Proto файл: `proto/community.proto`
 message Community {
   string id
   string owner_id
-  string owner_username
+  string owner_name
   string name
   string description
   string rules

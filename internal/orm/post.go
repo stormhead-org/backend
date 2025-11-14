@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,13 +9,13 @@ import (
 )
 
 type Post struct {
-	ID           uuid.UUID `gorm:"primaryKey"`
+	ID           uuid.UUID       `gorm:"primaryKey"`
 	CommunityID  uuid.UUID
 	Community    Community
 	AuthorID     uuid.UUID
 	Author       User
 	Title        string
-	Content      string
+	Content      json.RawMessage `gorm:"type:jsonb"`
 	Status       int
 	LikeCount    int
 	CommentCount int
