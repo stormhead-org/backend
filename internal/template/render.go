@@ -2,27 +2,22 @@ package template
 
 import (
 	"bytes"
-	"fmt"
-	"os"
-	"text/template"
+	"html/template"
 )
 
-func Render(path string, values any) (string, error) {
-	content, err := os.ReadFile(path)
+// Render executes a template with the given data and returns the result as a string.
+func Render(templatePath string, data interface{}) (string, error) {
+	// Read and parse the template file
+	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return "", err
 	}
 
-	var buffer bytes.Buffer
-	template, err := template.New("test").Parse(string(content))
-	if err != nil {
-		return "", fmt.Errorf("can't create template: %w", err)
+	// Execute the template with the provided data
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
 	}
 
-	err = template.Execute(&buffer, values)
-	if err != nil {
-		return "", fmt.Errorf("can't render template: %w", err)
-	}
-
-	return buffer.String(), err
+	return buf.String(), nil
 }

@@ -10,11 +10,10 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
-	eventpkg "github.com/stormhead-org/backend/internal/event"
-	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
-	middlewarepkg "github.com/stormhead-org/backend/internal/middleware"
-	ormpkg "github.com/stormhead-org/backend/internal/orm"
-	protopkg "github.com/stormhead-org/backend/internal/proto"
+	"github.com/stormhead-org/backend/internal/jwt"
+	"github.com/stormhead-org/backend/internal/middleware"
+	"github.com/stormhead-org/backend/internal/orm"
+	"github.com/stormhead-org/backend/internal/proto"
 )
 
 type GRPC struct {
@@ -28,39 +27,37 @@ func NewGRPC(
 	logger *zap.Logger,
 	host string,
 	port string,
-	jwt *jwtpkg.JWT,
-	database *ormpkg.PostgresClient,
-	broker *eventpkg.KafkaClient,
+	jwt *jwt.JWT,
+	db *orm.PostgresClient,
+	authServer *AuthorizationServer,
+	communityServer *CommunityServer,
+	postServer *PostServer,
+	commentServer *CommentServer,
+	userServer *UserServer,
 ) (*GRPC, error) {
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	if port == "" {
+		port = "8080"
+	}
+
+	rateLimiter := middleware.NewRateLimiterInterceptor(5, 600)
+	authMiddleware := middleware.NewAuthorizationMiddleware(logger, jwt, db)
+
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			middlewarepkg.NewAuthorizationMiddleware(
-				logger,
-				jwt,
-				database,
-			),
+			rateLimiter.Unary(),
+			authMiddleware,
 		),
 	)
 
-	// Authorization API
-	authorizationServer := NewAuthorizationServer(logger, jwt, database, broker)
-	protopkg.RegisterAuthorizationServiceServer(grpcServer, authorizationServer)
-
-	// Community API
-	communityServer := NewCommunityServer(logger, database, broker)
-	protopkg.RegisterCommunityServiceServer(grpcServer, communityServer)
-
-	// Post API
-	postServer := NewPostServer(logger, database, broker)
-	protopkg.RegisterPostServiceServer(grpcServer, postServer)
-
-	// Comment API
-	commentServer := NewCommentServer(logger, database, broker)
-	protopkg.RegisterCommentServiceServer(grpcServer, commentServer)
-
-	// User API
-	userServer := NewUserServer(logger, database, broker)
-	protopkg.RegisterUserServiceServer(grpcServer, userServer)
+	// Register services
+	proto.RegisterAuthorizationServiceServer(grpcServer, authServer)
+	proto.RegisterCommunityServiceServer(grpcServer, communityServer)
+	proto.RegisterPostServiceServer(grpcServer, postServer)
+	proto.RegisterCommentServiceServer(grpcServer, commentServer)
+	proto.RegisterUserServiceServer(grpcServer, userServer)
 
 	// Health API
 	healthServer := health.NewServer()
@@ -85,7 +82,7 @@ func (this *GRPC) Start() error {
 	}
 
 	go func() {
-		this.logger.Info("GRPC server started")
+		this.logger.Info("GRPC server started", zap.String("addr", listener.Addr().String()))
 		err := this.server.Serve(listener)
 		if err != nil {
 			this.logger.Error("GRPC server stopped", zap.Error(err))
@@ -97,5 +94,6 @@ func (this *GRPC) Start() error {
 
 func (this *GRPC) Stop() error {
 	this.server.GracefulStop()
+	this.logger.Info("GRPC server stopped gracefully")
 	return nil
 }

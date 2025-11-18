@@ -17,14 +17,25 @@ type User struct {
 	Salt              string
 	VerificationToken string
 	ResetToken        string
+	ResetTokenExpiresAt *time.Time
 	IsVerified        bool
+	Reputation        int64
+	LastActivity      time.Time
 	Communities       []Community `gorm:"foreignKey:OwnerID"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	IsBanned          bool          `gorm:"default:false" json:"is_banned"`
+	BanReason         string        `json:"ban_reason,omitempty"`
+	Roles             []*Role       `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 }
 
-func (c *User) TableName() string {
+// TableName returns the name of the table for the User model
+func (u *User) TableName() string {
 	return "user"
+}
+
+func (c *User) GetID() uuid.UUID {
+	return c.ID
 }
 
 func (c *User) BeforeCreate(transaction *gorm.DB) error {
@@ -47,6 +58,8 @@ func (c *PostgresClient) SelectUserByID(ID string) (*User, error) {
 				"verification_token",
 				"reset_token",
 				"is_verified",
+				"reputation",
+				"last_activity",
 			},
 		).
 		Where("id = ?", ID).
@@ -74,6 +87,8 @@ func (c *PostgresClient) SelectUserBySlug(slug string) (*User, error) {
 				"verification_token",
 				"reset_token",
 				"is_verified",
+				"reputation",
+				"last_activity",
 			},
 		).
 		Where("slug = ?", slug).
@@ -100,6 +115,8 @@ func (c *PostgresClient) SelectUserByName(name string) (*User, error) {
 				"verification_token",
 				"reset_token",
 				"is_verified",
+				"reputation",
+				"last_activity",
 			},
 		).
 		Where("name = ?", name).
@@ -127,6 +144,8 @@ func (c *PostgresClient) SelectUserByEmail(email string) (*User, error) {
 				"verification_token",
 				"reset_token",
 				"is_verified",
+				"reputation",
+				"last_activity",
 			},
 		).
 		Where("email = ?", email).
@@ -154,6 +173,8 @@ func (c *PostgresClient) SelectUserByVerificationToken(verificationToken string)
 				"verification_token",
 				"reset_token",
 				"is_verified",
+				"reputation",
+				"last_activity",
 			},
 		).
 		Where("verification_token = ?", verificationToken).
@@ -180,7 +201,10 @@ func (c *PostgresClient) SelectUserByResetToken(resetToken string) (*User, error
 				"salt",
 				"verification_token",
 				"reset_token",
+				"reset_token_expires_at",
 				"is_verified",
+				"reputation",
+				"last_activity",
 			},
 		).
 		Where("reset_token = ?", resetToken).
@@ -202,3 +226,22 @@ func (c *PostgresClient) UpdateUser(user *User) error {
 	tx := c.database.Model(user).Updates(user)
 	return tx.Error
 }
+
+func (c *PostgresClient) CountPostLikesByAuthor(authorID uuid.UUID) (int64, error) {
+	var count int64
+	tx := c.database.Model(&PostLike{}).
+		Joins("JOIN post ON post.id = post_like.post_id").
+		Where("post.author_id = ?", authorID).
+		Count(&count)
+	return count, tx.Error
+}
+
+func (c *PostgresClient) CountCommentLikesByAuthor(authorID uuid.UUID) (int64, error) {
+	var count int64
+	tx := c.database.Model(&CommentLike{}).
+		Joins("JOIN comment ON comment.id = comment_like.comment_id").
+		Where("comment.author_id = ?", authorID).
+		Count(&count)
+	return count, tx.Error
+}
+

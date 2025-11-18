@@ -110,9 +110,9 @@ func (c *PostgresClient) DeleteSession(session *Session) error {
 }
 
 func (c *PostgresClient) DeleteSessions() error {
-	// TODO: not working, debug this
+	thirtyDaysAgo := time.Now().Add(-30 * 24 * time.Hour)
 	tx := c.database.
-		Where("updated_at < NOW() - interval '15 min'").
+		Where("updated_at < ?", thirtyDaysAgo).
 		Delete(&Session{})
 
 	return tx.Error

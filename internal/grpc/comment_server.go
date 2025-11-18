@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -291,6 +290,6 @@ func (s *CommentServer) Unlike(ctx context.Context, request *protopkg.UnlikeComm
 	return &protopkg.UnlikeCommentResponse{}, nil
 }
 
-func (s *CommentServer) Stream(*protopkg.StreamCommentRequest, grpc.ServerStreamingServer[protopkg.CommentEvent]) error {
+func (s *CommentServer) Stream(request *protopkg.StreamCommentRequest, stream protopkg.CommentService_StreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
 }

@@ -954,12 +954,13 @@ func (x *CurrentUserProfile) GetCreatedAt() *timestamppb.Timestamp {
 
 type UserStatistics struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	CommunitiesJoined  int32                  `protobuf:"varint,1,opt,name=communities_joined,json=communitiesJoined,proto3" json:"communities_joined,omitempty"`
-	CommunitiesCreated int32                  `protobuf:"varint,2,opt,name=communities_created,json=communitiesCreated,proto3" json:"communities_created,omitempty"`
-	PostsCreated       int32                  `protobuf:"varint,3,opt,name=posts_created,json=postsCreated,proto3" json:"posts_created,omitempty"`
-	CommentsCreated    int32                  `protobuf:"varint,4,opt,name=comments_created,json=commentsCreated,proto3" json:"comments_created,omitempty"`
-	PostLikes          int32                  `protobuf:"varint,5,opt,name=post_likes,json=postLikes,proto3" json:"post_likes,omitempty"`
-	CommentLikes       int32                  `protobuf:"varint,6,opt,name=comment_likes,json=commentLikes,proto3" json:"comment_likes,omitempty"`
+	Reputation         float64                `protobuf:"fixed64,1,opt,name=reputation,proto3" json:"reputation,omitempty"`
+	CommunitiesJoined  int32                  `protobuf:"varint,2,opt,name=communities_joined,json=communitiesJoined,proto3" json:"communities_joined,omitempty"`
+	CommunitiesCreated int32                  `protobuf:"varint,3,opt,name=communities_created,json=communitiesCreated,proto3" json:"communities_created,omitempty"`
+	PostsCreated       int32                  `protobuf:"varint,4,opt,name=posts_created,json=postsCreated,proto3" json:"posts_created,omitempty"`
+	CommentsCreated    int32                  `protobuf:"varint,5,opt,name=comments_created,json=commentsCreated,proto3" json:"comments_created,omitempty"`
+	PostLikes          int32                  `protobuf:"varint,6,opt,name=post_likes,json=postLikes,proto3" json:"post_likes,omitempty"`
+	CommentLikes       int32                  `protobuf:"varint,7,opt,name=comment_likes,json=commentLikes,proto3" json:"comment_likes,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -992,6 +993,13 @@ func (x *UserStatistics) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UserStatistics.ProtoReflect.Descriptor instead.
 func (*UserStatistics) Descriptor() ([]byte, []int) {
 	return file_entity_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UserStatistics) GetReputation() float64 {
+	if x != nil {
+		return x.Reputation
+	}
+	return 0
 }
 
 func (x *UserStatistics) GetCommunitiesJoined() int32 {
@@ -1150,15 +1158,18 @@ const file_entity_proto_rawDesc = "" +
 	"\x18joined_communities_count\x18\v \x01(\x05R\x16joinedCommunitiesCount\x122\n" +
 	"\x15active_sessions_count\x18\f \x01(\x05R\x13activeSessionsCount\x129\n" +
 	"\n" +
-	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x84\x02\n" +
-	"\x0eUserStatistics\x12-\n" +
-	"\x12communities_joined\x18\x01 \x01(\x05R\x11communitiesJoined\x12/\n" +
-	"\x13communities_created\x18\x02 \x01(\x05R\x12communitiesCreated\x12#\n" +
-	"\rposts_created\x18\x03 \x01(\x05R\fpostsCreated\x12)\n" +
-	"\x10comments_created\x18\x04 \x01(\x05R\x0fcommentsCreated\x12\x1d\n" +
+	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xa4\x02\n" +
+	"\x0eUserStatistics\x12\x1e\n" +
 	"\n" +
-	"post_likes\x18\x05 \x01(\x05R\tpostLikes\x12#\n" +
-	"\rcomment_likes\x18\x06 \x01(\x05R\fcommentLikes*[\n" +
+	"reputation\x18\x01 \x01(\x01R\n" +
+	"reputation\x12-\n" +
+	"\x12communities_joined\x18\x02 \x01(\x05R\x11communitiesJoined\x12/\n" +
+	"\x13communities_created\x18\x03 \x01(\x05R\x12communitiesCreated\x12#\n" +
+	"\rposts_created\x18\x04 \x01(\x05R\fpostsCreated\x12)\n" +
+	"\x10comments_created\x18\x05 \x01(\x05R\x0fcommentsCreated\x12\x1d\n" +
+	"\n" +
+	"post_likes\x18\x06 \x01(\x05R\tpostLikes\x12#\n" +
+	"\rcomment_likes\x18\a \x01(\x05R\fcommentLikes*[\n" +
 	"\n" +
 	"PostStatus\x12\x1b\n" +
 	"\x17POST_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +

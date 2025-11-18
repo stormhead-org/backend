@@ -6501,6 +6501,10 @@
     "protoUserStatistics": {
       "type": "object",
       "properties": {
+        "reputation": {
+          "type": "number",
+          "format": "double"
+        },
         "communitiesJoined": {
           "type": "integer",
           "format": "int32"

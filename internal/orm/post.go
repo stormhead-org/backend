@@ -5,23 +5,30 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stormhead-org/backend/internal/lib"
 	"gorm.io/gorm"
 )
 
+type PostStatus int
+
+const (
+	PostStatusDraft PostStatus = iota
+	PostStatusPublished
+)
+
 type Post struct {
-	ID           uuid.UUID       `gorm:"primaryKey"`
-	CommunityID  uuid.UUID
-	Community    Community
-	AuthorID     uuid.UUID
-	Author       User
-	Title        string
-	Content      json.RawMessage `gorm:"type:jsonb"`
-	Status       int
-	LikeCount    int
-	CommentCount int
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	PublishedAt  time.Time
+	ID          uuid.UUID `gorm:"primaryKey"`
+	CommunityID uuid.UUID
+	Community   Community `gorm:"foreignKey:CommunityID"`
+	AuthorID    uuid.UUID
+	Author      User `gorm:"foreignKey:AuthorID"`
+	Title       string
+	Content     json.RawMessage `gorm:"type:jsonb"`
+	Status      int
+	LikeCount   int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	PublishedAt time.Time
 }
 
 func (c *Post) TableName() string {
@@ -31,6 +38,14 @@ func (c *Post) TableName() string {
 func (c *Post) BeforeCreate(transaction *gorm.DB) error {
 	c.ID = uuid.New()
 	return nil
+}
+
+func (p Post) GetID() uuid.UUID {
+	return p.ID
+}
+
+func (p Post) GetCreatedAt() time.Time {
+	return p.CreatedAt
 }
 
 func (c *PostgresClient) SelectPostByID(id string) (*Post, error) {
@@ -79,31 +94,18 @@ func (c *PostgresClient) SelectPostsWithPagination(author_id string, limit int, 
 		}).
 		Preload("Community").
 		Preload("Author").
-		Order("created_at DESC")
+		Order("created_at DESC, id DESC")
 
 	if author_id != "" {
 		query = query.Where("author_id = ?", author_id)
 	}
 
-	if cursor != "" {
-		var cursorPost Post
-		tx := c.database.
-			Where("id = ?", cursor).
-			First(&cursorPost)
-
-		if tx.Error != nil {
-			return nil, tx.Error
-		}
-
-		query = query.Where(
-			"(created_at < ?) OR (created_at = ? AND id < ?)",
-			cursorPost.CreatedAt,
-			cursorPost.CreatedAt,
-			cursorPost.ID,
-		)
+	paginatedQuery, err := lib.Paginate[Post](c.database, query, cursor, limit)
+	if err != nil {
+		return nil, err
 	}
 
-	tx := query.Limit(limit).Find(&posts)
+	tx := paginatedQuery.Find(&posts)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

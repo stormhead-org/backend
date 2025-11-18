@@ -73,3 +73,14 @@ database-apply-migrations:
 
 database-delete-migrations:
 	migrate -database 'postgres://postgres:postgres@127.0.0.1:5432?sslmode=disable' -path migration down
+
+test:
+	go test -v ./...
+
+test-coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
+
+test-coverage-enforce:
+	go test -covermode=count -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out | awk -v threshold=80 '{if ($$NF+0 < threshold && $$1 != "total:") {print "Error: Coverage for " $$1 " is below " threshold "%. Got " $$NF "%."; exit 1}}'

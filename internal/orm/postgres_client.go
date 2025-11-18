@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -41,4 +42,43 @@ func NewPostgresClient(host string, port string, user string, password string) (
 	return &PostgresClient{
 		database: database,
 	}, nil
+}
+
+func (c *PostgresClient) CountUsers() (int64, error) {
+	var count int64
+	if err := c.database.Model(&User{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (c *PostgresClient) SelectRoleByName(name string, communityID *uuid.UUID) (*Role, error) {
+	var role Role
+	query := c.database.Where("name = ?", name)
+	if communityID != nil {
+		query = query.Where("community_id = ?", *communityID)
+	} else {
+		query = query.Where("community_id IS NULL")
+	}
+	if err := query.First(&role).Error; err != nil {
+		return nil, err
+	}
+	return &role, nil
+}
+
+func (c *PostgresClient) InsertRole(role *Role) error {
+	return c.database.Create(role).Error
+}
+
+func (c *PostgresClient) InsertUserRole(userRole *UserRole) error {
+	return c.database.Create(userRole).Error
+}
+
+func (c *PostgresClient) DeleteSessionsByUserID(userID string) error {
+	tx := c.database.Where("user_id = ?", userID).Delete(&Session{})
+	return tx.Error
+}
+
+func (c *PostgresClient) UpdatePlatformOwner(userID uuid.UUID) error {
+	return c.database.Model(&PlatformSetting{}).Where("id = ?", 1).Update("platform_owner_id", userID).Error
 }

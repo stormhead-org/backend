@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Node
+node_modules
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*
+!/.env.example
+
+# OS
+.DS_Store
+Thumbs.db
