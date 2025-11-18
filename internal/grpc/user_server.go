@@ -2,14 +2,16 @@ package grpc
 
 import (
 	"context"
-
+	"encoding/json" // Добавлен импорт json
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb" // Добавлен импорт structpb
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	eventpkg "github.com/stormhead-org/backend/internal/event"
+	"github.com/stormhead-org/backend/internal/lib"
 	middlewarepkg "github.com/stormhead-org/backend/internal/middleware"
 	ormpkg "github.com/stormhead-org/backend/internal/orm"
 	protopkg "github.com/stormhead-org/backend/internal/proto"
@@ -32,13 +34,9 @@ func NewUserServer(log *zap.Logger, database *ormpkg.PostgresClient, broker *eve
 
 func (s *UserServer) Get(ctx context.Context, request *protopkg.GetUserRequest) (*protopkg.GetUserResponse, error) {
 	user, err := s.database.SelectUserByID(request.UserId)
-	if err == gorm.ErrRecordNotFound {
-		s.log.Debug("user not found", zap.String("user_id", request.UserId))
-		return nil, status.Errorf(codes.NotFound, "")
-	}
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "")
+		s.log.Error("failed to select user by id", zap.Error(err), zap.String("user_id", request.UserId))
+		return nil, lib.HandleError(err)
 	}
 
 	return &protopkg.GetUserResponse{
@@ -99,20 +97,22 @@ func (s *UserServer) UpdateProfile(ctx context.Context, request *protopkg.Update
 }
 
 func (s *UserServer) GetStatistics(ctx context.Context, request *protopkg.GetUserStatisticsRequest) (*protopkg.GetUserStatisticsResponse, error) {
-	userID, err := middlewarepkg.GetUserID(ctx)
+	user, err := s.database.SelectUserByID(request.UserId)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "")
+		s.log.Error("failed to select user by id", zap.Error(err), zap.String("user_id", request.UserId))
+		return nil, lib.HandleError(err)
 	}
 
-	_, err = s.database.SelectUserByID(userID)
+	reputation, err := lib.CalculateUserReputation(s.database, user)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "")
+		s.log.Error("failed to calculate user reputation", zap.Error(err), zap.String("user_id", request.UserId))
+		return nil, status.Errorf(codes.Internal, "failed to calculate reputation")
 	}
 
 	return &protopkg.GetUserStatisticsResponse{
-		Statistics: &protopkg.UserStatistics{},
+		Statistics: &protopkg.UserStatistics{
+			Reputation: reputation,
+		},
 	}, nil
 }
 
@@ -182,6 +182,28 @@ func (s *UserServer) ListPosts(ctx context.Context, request *protopkg.ListUserPo
 
 	result := make([]*protopkg.Post, len(posts))
 	for i, post := range posts {
+		var structContent *structpb.Struct
+		if len(post.Content) > 0 {
+			var contentInterface interface{}
+			if err := json.Unmarshal(post.Content, &contentInterface); err != nil {
+				s.log.Error("failed to unmarshal content from JSON", zap.Error(err))
+				return nil, status.Errorf(codes.Internal, "failed to process content")
+			}
+			if contentStruct, ok := contentInterface.(map[string]interface{}); ok {
+				structContent, err = structpb.NewStruct(contentStruct)
+				if err != nil {
+					s.log.Error("failed to create structpb struct from content", zap.Error(err))
+					return nil, status.Errorf(codes.Internal, "failed to process content")
+				}
+			} else {
+				structContent, err = structpb.NewStruct(map[string]interface{}{"value": contentInterface})
+				if err != nil {
+					s.log.Error("failed to create structpb struct from content", zap.Error(err))
+					return nil, status.Errorf(codes.Internal, "failed to process content")
+				}
+			}
+		}
+
 		result[i] = &protopkg.Post{
 			Id:            post.ID.String(),
 			CommunityId:   post.CommunityID.String(),
@@ -189,7 +211,7 @@ func (s *UserServer) ListPosts(ctx context.Context, request *protopkg.ListUserPo
 			AuthorId:      post.AuthorID.String(),
 			AuthorName:    post.Author.Name,
 			Title:         post.Title,
-			Content:       post.Content,
+			Content:       structContent,
 			Status:        protopkg.PostStatus(post.Status),
 			CreatedAt:     timestamppb.New(post.CreatedAt),
 			UpdatedAt:     timestamppb.New(post.UpdatedAt),

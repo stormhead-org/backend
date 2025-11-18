@@ -1,0 +1,43 @@
+# Patterns to ignore when building Helm charts
+# This is a .helmignore file.
+# You can use it to ignore files when packaging Helm charts.
+# Similar to .gitignore, but for Helm.
+
+# ignore artifacts
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.bak
+*.tmp
+*.swp
+*.swo
+*.orig
+*.rej
+*~
+.#*
+.#*#
+.DS_Store
+Thumbs.db
+
+# ignore editor/IDE files
+.idea/
+.vscode/
+.project
+.classpath
+.settings/
+
+# ignore build/dependency directories
+node_modules/
+vendor/
+target/
+build/
+dist/
+
+# ignore hidden files
+.*
+
+# ignore specific files
+Chart.lock
+.helmignore

@@ -11,6 +11,7 @@ import (
 
 	clientpkg "github.com/stormhead-org/backend/internal/client"
 	eventpkg "github.com/stormhead-org/backend/internal/event"
+	ormpkg "github.com/stormhead-org/backend/internal/orm"
 	workerpkg "github.com/stormhead-org/backend/internal/worker"
 )
 
@@ -103,6 +104,40 @@ func workerCommandImpl() error {
 				return mailClient, nil
 			},
 
+			func(lifecycle fx.Lifecycle, shutdowner fx.Shutdowner, logger *zap.Logger) (*ormpkg.PostgresClient, error) {
+				postgresHost := os.Getenv("POSTGRES_HOST")
+				if postgresHost == "" {
+					postgresHost = "127.0.0.1"
+				}
+
+				postgresPort := os.Getenv("POSTGRES_PORT")
+				if postgresPort == "" {
+					postgresPort = "5432"
+				}
+
+				postgresUser := os.Getenv("POSTGRES_USER")
+				if postgresUser == "" {
+					postgresUser = "postgres"
+				}
+
+				postgresPassword := os.Getenv("POSTGRES_PASSWORD")
+				if postgresPassword == "" {
+					postgresPassword = "postgres"
+				}
+
+				client, err := ormpkg.NewPostgresClient(
+					postgresHost,
+					postgresPort,
+					postgresUser,
+					postgresPassword,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				return client, err
+			},
+
 			// Application
 			func(
 				lifecycle fx.Lifecycle,
@@ -110,8 +145,22 @@ func workerCommandImpl() error {
 				logger *zap.Logger,
 				kafkaClient *eventpkg.KafkaClient,
 				mailClient *clientpkg.MailClient,
+				databaseClient *ormpkg.PostgresClient,
 			) (*workerpkg.Worker, error) {
-				worker := workerpkg.NewWorker(logger, kafkaClient, mailClient)
+				verificationURL := os.Getenv("VERIFICATION_URL")
+				if verificationURL == "" {
+					verificationURL = "http://localhost:3000/verify-email"
+				}
+				passwordResetURL := os.Getenv("PASSWORD_RESET_URL")
+				if passwordResetURL == "" {
+					passwordResetURL = "http://localhost:3000/reset-password"
+				}
+				config := &workerpkg.Config{
+					VerificationURL:   verificationURL,
+					PasswordResetURL: passwordResetURL,
+				}
+
+				worker := workerpkg.NewWorker(logger, kafkaClient, mailClient, databaseClient, config)
 
 				lifecycle.Append(fx.Hook{
 					OnStart: func(ctx context.Context) error {
@@ -126,15 +175,9 @@ func workerCommandImpl() error {
 			},
 		),
 		fx.Invoke(
-			func(*eventpkg.KafkaClient) {
-				// TODO:
-			},
-			func(*clientpkg.MailClient) {
-				// TODO:
-			},
-			func(*workerpkg.Worker) {
-				// TODO:
-			},
+			func(*eventpkg.KafkaClient) {},
+			func(*clientpkg.MailClient) {},
+			func(*workerpkg.Worker) {},
 		),
 	)
 	application.Run()

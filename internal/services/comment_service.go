@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"go-backend-base/internal/orm"
+	"github.com/stormhead-org/backend/internal/orm"
 )
 
 // CommentService defines the interface for comment-related operations.

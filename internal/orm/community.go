@@ -28,6 +28,10 @@ func (c *Community) TableName() string {
 	return "community"
 }
 
+func (c *Community) GetID() uuid.UUID {
+	return c.ID
+}
+
 func (c *Community) BeforeCreate(transaction *gorm.DB) error {
 	c.ID = uuid.New()
 	return nil
@@ -180,4 +184,22 @@ func (c *PostgresClient) UpdateCommunity(community *Community) error {
 func (c *PostgresClient) DeleteCommunity(community *Community) error {
 	tx := c.database.Delete(community)
 	return tx.Error
+}
+
+func (c *PostgresClient) CountPostLikesInCommunity(communityID uuid.UUID) (int64, error) {
+	var count int64
+	tx := c.database.Model(&PostLike{}).
+		Joins("JOIN post ON post.id = post_like.post_id").
+		Where("post.community_id = ?", communityID).
+		Count(&count)
+	return count, tx.Error
+}
+
+func (c *PostgresClient) CountCommentsInCommunity(communityID uuid.UUID) (int64, error) {
+	var count int64
+	tx := c.database.Model(&Comment{}).
+		Joins("JOIN post ON post.id = comment.post_id").
+		Where("post.community_id = ?", communityID).
+		Count(&count)
+	return count, tx.Error
 }

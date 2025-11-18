@@ -22,6 +22,7 @@ func NewAuthorizationMiddleware(logger *zap.Logger, jwt *jwtpkg.JWT, database *o
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		bypassCheck := map[string]bool{
+			// Authorization
 			"/proto.AuthorizationService/ValidateUserSlug":     true,
 			"/proto.AuthorizationService/ValidateUserName":     true,
 			"/proto.AuthorizationService/ValidateUserEmail":    true,
@@ -30,6 +31,27 @@ func NewAuthorizationMiddleware(logger *zap.Logger, jwt *jwtpkg.JWT, database *o
 			"/proto.AuthorizationService/VerifyEmail":          true,
 			"/proto.AuthorizationService/RequestPasswordReset": true,
 			"/proto.AuthorizationService/ConfirmPasswordReset": true,
+
+			// Community
+			"/proto.CommunityService/Get":             true,
+			"/proto.CommunityService/ListCommunities": true,
+
+			// Post
+			"/proto.PostService/Get":                 true,
+			"/proto.PostService/ListCommunityPosts": true,
+
+			// Comment
+			"/proto.CommentService/List": true,
+
+			// User
+			"/proto.UserService/Get":             true,
+			"/proto.UserService/GetStatistics":   true,
+			"/proto.UserService/ListCommunities": true,
+			"/proto.UserService/ListPosts":       true,
+			"/proto.UserService/ListComments":    true,
+
+			// Health
+			"/grpc.health.v1.Health/Check": true,
 		}
 		if bypassCheck[information.FullMethod] {
 			return handler(ctx, request)

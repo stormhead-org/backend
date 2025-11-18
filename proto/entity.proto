@@ -112,10 +112,11 @@ message CurrentUserProfile {
 }
 
 message UserStatistics {
-  int32 communities_joined  = 1;
-  int32 communities_created = 2;
-  int32 posts_created       = 3;
-  int32 comments_created    = 4;
-  int32 post_likes          = 5;
-  int32 comment_likes       = 6;
+  double reputation         = 1;
+  int32 communities_joined  = 2;
+  int32 communities_created = 3;
+  int32 posts_created       = 4;
+  int32 comments_created    = 5;
+  int32 post_likes          = 6;
+  int32 comment_likes       = 7;
 }

@@ -5,8 +5,9 @@
 !.env_production
 /backend
 /backend-*.tgz
+
+# Doc
 .specify/
-.qwen/
 .gemini/
 specs/
 project.md

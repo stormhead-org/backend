@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stormhead-org/backend/internal/lib"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,14 @@ func (c *Comment) TableName() string {
 func (c *Comment) BeforeCreate(transaction *gorm.DB) error {
 	c.ID = uuid.New()
 	return nil
+}
+
+func (c Comment) GetID() uuid.UUID {
+	return c.ID
+}
+
+func (c Comment) GetCreatedAt() time.Time {
+	return c.CreatedAt
 }
 
 func (c *PostgresClient) SelectCommentByID(id string) (*Comment, error) {
@@ -68,7 +77,7 @@ func (c *PostgresClient) SelectCommentsWithPagination(post_id string, author_id 
 		}).
 		Preload("Post").
 		Preload("Author").
-		Order("created_at DESC")
+		Order("created_at DESC, id DESC")
 
 	if post_id != "" {
 		query = query.Where("post_id = ?", post_id)
@@ -78,25 +87,12 @@ func (c *PostgresClient) SelectCommentsWithPagination(post_id string, author_id 
 		query = query.Where("author_id = ?", author_id)
 	}
 
-	if cursor != "" {
-		var cursorComment Comment
-		tx := c.database.
-			Where("id = ?", cursor).
-			First(&cursorComment)
-
-		if tx.Error != nil {
-			return nil, tx.Error
-		}
-
-		query = query.Where(
-			"(created_at < ?) OR (created_at = ? AND id < ?)",
-			cursorComment.CreatedAt,
-			cursorComment.CreatedAt,
-			cursorComment.ID,
-		)
+	paginatedQuery, err := lib.Paginate[Comment](c.database, query, cursor, limit)
+	if err != nil {
+		return nil, err
 	}
 
-	tx := query.Limit(limit).Find(&comments)
+	tx := paginatedQuery.Find(&comments)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

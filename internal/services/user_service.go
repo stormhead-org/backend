@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"go-backend-base/internal/orm"
+	"github.com/stormhead-org/backend/internal/orm"
 )
 
-// UserService defines the interface for user-related operations.
 type UserService interface {
 	Register(ctx context.Context, email, password string) (*orm.User, error)
 	Login(ctx context.Context, email, password string) (*orm.User, *orm.Session, error)
@@ -16,6 +15,8 @@ type UserService interface {
 	ConfirmPasswordReset(ctx context.Context, token, newPassword string) error
 	ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error
 	GetCurrentSession(ctx context.Context, sessionID uuid.UUID) (*orm.Session, error)
-	ListActiveSessions(ctx context.Context, userID uuid.UUID, cursor string, limit int) ([]orm.Session, string, error)
-	RevokeSession(ctx context.Context, sessionID uuid.UUID) error
+	ListActiveSessions(ctx context.Context, userID uuid.UUID, cursor string, limit int) ([]*orm.Session, string, error)
+	RevokeSession(ctx context.Context, currentSessionID, sessionIDToRevoke uuid.UUID) error
+	GetUserByID(ctx context.Context, userID string) (*orm.User, error)
+	GetSessionByID(ctx context.Context, sessionID string) (*orm.Session, error)
 }

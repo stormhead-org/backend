@@ -2,263 +2,80 @@ package grpc
 
 import (
 	"context"
-	"strings"
 
+	"github.com/google/uuid"
+	"github.com/stormhead-org/backend/internal/jwt"
+	"github.com/stormhead-org/backend/internal/middleware"
+	"github.com/stormhead-org/backend/internal/services"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/gorm"
 
-	eventpkg "github.com/stormhead-org/backend/internal/event"
-	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
-	middlewarepkg "github.com/stormhead-org/backend/internal/middleware"
-	ormpkg "github.com/stormhead-org/backend/internal/orm"
-	protopkg "github.com/stormhead-org/backend/internal/proto"
-	securitypkg "github.com/stormhead-org/backend/internal/security"
+	pb "github.com/stormhead-org/backend/internal/proto"
 )
 
-const SESSIONS_PER_PAGE = 10
-
 type AuthorizationServer struct {
-	protopkg.UnimplementedAuthorizationServiceServer
-	log      *zap.Logger
-	jwt      *jwtpkg.JWT
-	database *ormpkg.PostgresClient
-	broker   *eventpkg.KafkaClient
+	pb.UnimplementedAuthorizationServiceServer
+	logger      *zap.Logger
+	jwtManager  *jwt.JWT
+	userService services.UserService
 }
 
-func NewAuthorizationServer(log *zap.Logger, jwt *jwtpkg.JWT, database *ormpkg.PostgresClient, broker *eventpkg.KafkaClient) *AuthorizationServer {
+func NewAuthorizationServer(logger *zap.Logger, jwtManager *jwt.JWT, userService services.UserService) *AuthorizationServer {
 	return &AuthorizationServer{
-		log:      log,
-		jwt:      jwt,
-		database: database,
-		broker:   broker,
+		logger:      logger,
+		jwtManager:  jwtManager,
+		userService: userService,
 	}
 }
 
-func (s *AuthorizationServer) ValidateUserSlug(ctx context.Context, request *protopkg.ValidateUserSlugRequest) (*protopkg.ValidateUserSlugResponse, error) {
-	_, err := s.database.SelectUserBySlug(
-		request.Slug,
-	)
-	if err != gorm.ErrRecordNotFound {
-		return nil, status.Errorf(codes.InvalidArgument, "slug already exist")
+func (s *AuthorizationServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	if req.Email == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "email is required")
+	}
+	if req.Password == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "password is required")
 	}
 
-	return &protopkg.ValidateUserSlugResponse{}, nil
+	user, err := s.userService.Register(ctx, req.Email, req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.RegisterResponse{
+		UserId: user.ID.String(),
+	},
+	nil
 }
 
-func (s *AuthorizationServer) ValidateUserName(ctx context.Context, request *protopkg.ValidateUserNameRequest) (*protopkg.ValidateUserNameResponse, error) {
-	_, err := s.database.SelectUserByName(
-		request.Name,
-	)
-	if err != gorm.ErrRecordNotFound {
-		return nil, status.Errorf(codes.InvalidArgument, "name already exist")
+func (s *AuthorizationServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	if req.Email == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "email is required")
+	}
+	if req.Password == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "password is required")
 	}
 
-	return &protopkg.ValidateUserNameResponse{}, nil
-}
-
-func (s *AuthorizationServer) ValidateUserEmail(ctx context.Context, request *protopkg.ValidateUserEmailRequest) (*protopkg.ValidateUserEmailResponse, error) {
-	_, err := s.database.SelectUserByEmail(
-		request.Email,
-	)
-	if err != gorm.ErrRecordNotFound {
-		return nil, status.Errorf(codes.InvalidArgument, "email already exist")
-	}
-
-	return &protopkg.ValidateUserEmailResponse{}, nil
-}
-
-func (s *AuthorizationServer) Register(ctx context.Context, request *protopkg.RegisterRequest) (*protopkg.RegisterResponse, error) {
-	// Validate request
-	err := ValidateUserSlug(request.Slug)
+	user, session, err := s.userService.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "name not match conditions")
+		return nil, err
 	}
 
-	err = ValidateUserName(request.Name)
+	accessToken, err := s.jwtManager.GenerateAccessToken(session.ID.String())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "name not match conditions")
-	}
-
-	err = ValidateUserEmail(request.Email)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "email not match conditions")
-	}
-
-	// Validate slug
-	_, err = s.database.SelectUserBySlug(
-		request.Slug,
-	)
-	if err != gorm.ErrRecordNotFound {
-		return nil, status.Errorf(codes.InvalidArgument, "slug already exist")
-	}
-
-	// Validate name
-	_, err = s.database.SelectUserByName(
-		request.Name,
-	)
-	if err != gorm.ErrRecordNotFound {
-		return nil, status.Errorf(codes.InvalidArgument, "name already exist")
-	}
-
-	// Validate email
-	_, err = s.database.SelectUserByEmail(
-		request.Email,
-	)
-	if err != gorm.ErrRecordNotFound {
-		return nil, status.Errorf(codes.InvalidArgument, "email already exist")
-	}
-
-	// Salt password
-	salt := securitypkg.GenerateSalt()
-
-	hash, err := securitypkg.HashPassword(
-		request.Password,
-		salt,
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
+		s.logger.Error("internal error", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	// Create user
-	user := &ormpkg.User{
-		Slug:              request.Slug,
-		Name:              request.Name,
-		Email:             request.Email,
-		Password:          hash,
-		Salt:              salt,
-		VerificationToken: securitypkg.GenerateToken(),
-		IsVerified:        false,
-	}
-	err = s.database.InsertUser(user)
+	refreshToken, err := s.jwtManager.GenerateRefreshToken(session.ID.String())
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
+		s.logger.Error("internal error", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	// Write message to broker
-	err = s.broker.WriteMessage(
-		ctx,
-		eventpkg.AUTHORIZATION_REGISTER,
-		eventpkg.AuthorizationRegisterMessage{
-			ID: user.ID.String(),
-		},
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return nil, nil
-}
-
-func (s *AuthorizationServer) Login(ctx context.Context, request *protopkg.LoginRequest) (*protopkg.LoginResponse, error) {
-	// Get user from database
-	user, err := s.database.SelectUserByEmail(
-		request.Email,
-	)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, status.Errorf(codes.InvalidArgument, "user not verified")
-	}
-
-	err = securitypkg.ComparePasswords(
-		user.Password,
-		request.Password,
-		user.Salt,
-	)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "password invalid")
-	}
-
-	// Obtain user agent and ip address
-	userAgent := "unknown"
-	m, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		userAgent = strings.Join(m["user-agent"], "")
-	}
-
-	ipAddress := "unknown"
-	p, ok := peer.FromContext(ctx)
-	if ok {
-		parts := strings.Split(p.Addr.String(), ":")
-		if len(parts) == 2 {
-			ipAddress = parts[0]
-		}
-	}
-
-	if userAgent == "unknown" || ipAddress == "unknown" {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	// Check existing sessions
-	sessions, err := s.database.SelectSessionsByUserID(user.ID.String(), "", 0)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	for _, session := range sessions {
-		if session.IpAddress != ipAddress {
-			continue
-		}
-
-		if session.UserAgent != userAgent {
-			continue
-		}
-
-		s.log.Error("multiple login attempt from same client")
-		// return nil, status.Errorf(codes.Internal, "multiple login attempt from same client")
-	}
-
-	// Create session
-	session := ormpkg.Session{
-		UserID:    user.ID,
-		UserAgent: userAgent,
-		IpAddress: ipAddress,
-	}
-	err = s.database.InsertSession(&session)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	// Generate tokens
-	accessToken, err := s.jwt.GenerateAccessToken(session.ID.String())
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	refreshToken, err := s.jwt.GenerateRefreshToken(session.ID.String())
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	// Write message to broker
-	err = s.broker.WriteMessage(
-		ctx,
-		eventpkg.AUTHORIZATION_LOGIN,
-		eventpkg.AuthorizationLoginMessage{
-			ID: user.ID.String(),
-		},
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.LoginResponse{
-		User: &protopkg.User{
+	return &pb.LoginResponse{
+		User: &pb.User{
 			Id:          user.ID.String(),
 			Slug:        user.Slug,
 			Name:        user.Name,
@@ -268,336 +85,187 @@ func (s *AuthorizationServer) Login(ctx context.Context, request *protopkg.Login
 		},
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, nil
+	},
+	nil
 }
 
-func (s *AuthorizationServer) Logout(ctx context.Context, request *protopkg.LogoutRequest) (*protopkg.LogoutResponse, error) {
-	// Get current session
-	sessionID, err := middlewarepkg.GetSessionID(ctx)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	session, err := s.database.SelectSessionByID(sessionID)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	// Delete session from database
-	err = s.database.DeleteSession(session)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	// Write message to broker
-	err = s.broker.WriteMessage(
-		ctx,
-		eventpkg.AUTHORIZATION_LOGOUT,
-		eventpkg.AuthorizationLogoutMessage{
-			ID: session.UserID.String(),
-		},
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.LogoutResponse{}, nil
+func (s *AuthorizationServer) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
+	// Client handles token deletion. Server-side invalidation can be added if needed.
+	return &pb.LogoutResponse{}, nil
 }
 
-func (s *AuthorizationServer) RefreshToken(ctx context.Context, request *protopkg.RefreshTokenRequest) (*protopkg.RefreshTokenResponse, error) {
-	// Get token
-	id, err := s.jwt.ParseRefreshToken(
-		request.RefreshToken,
-	)
-	if err != nil {
-		s.log.Error("can't parse refresh token", zap.Error(err))
-		return nil, status.Errorf(codes.InvalidArgument, "refresh token invalid")
+func (s *AuthorizationServer) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error) {
+	if req.RefreshToken == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "refresh token is required")
 	}
 
-	// Recreate tokens
-	accessToken, err := s.jwt.GenerateAccessToken(id)
+	sessionID, err := s.jwtManager.ParseRefreshToken(req.RefreshToken)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
+		return nil, status.Errorf(codes.Unauthenticated, "invalid refresh token")
+	}
+
+	newAccessToken, err := s.jwtManager.GenerateAccessToken(sessionID)
+	if err != nil {
+		s.logger.Error("failed to generate new access token", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	refreshToken, err := s.jwt.GenerateRefreshToken(id)
+	newRefreshToken, err := s.jwtManager.GenerateRefreshToken(sessionID)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
+		s.logger.Error("failed to generate new refresh token", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	// Write message to broker
-	err = s.broker.WriteMessage(
-		ctx,
-		eventpkg.AUTHORIZATION_REFRESH_TOKEN,
-		eventpkg.AuthorizationRefreshTokenMessage{
-			ID: id,
-		},
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.RefreshTokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	return &pb.RefreshTokenResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+	},
+	nil
 }
 
-func (s *AuthorizationServer) VerifyEmail(ctx context.Context, request *protopkg.VerifyEmailRequest) (*protopkg.VerifyEmailResponse, error) {
-	// Find user
-	user, err := s.database.SelectUserByVerificationToken(request.Token)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "user not exist")
+func (s *AuthorizationServer) VerifyEmail(ctx context.Context, req *pb.VerifyEmailRequest) (*pb.VerifyEmailResponse, error) {
+	if req.Token == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "verification token is required")
 	}
 
-	// Update user
-	user.IsVerified = true
-
-	err = s.database.UpdateUser(user)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+	if err := s.userService.VerifyEmail(ctx, req.Token); err != nil {
+		return nil, err
 	}
 
-	return &protopkg.VerifyEmailResponse{}, nil
+	return &pb.VerifyEmailResponse{}, nil
 }
 
-func (s *AuthorizationServer) RequestPasswordReset(ctx context.Context, request *protopkg.RequestPasswordResetRequest) (*protopkg.RequestPasswordResetResponse, error) {
-	// Get user from database
-	user, err := s.database.SelectUserByEmail(
-		request.Email,
-	)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, status.Errorf(codes.InvalidArgument, "user not verified")
+func (s *AuthorizationServer) RequestPasswordReset(ctx context.Context, req *pb.RequestPasswordResetRequest) (*pb.RequestPasswordResetResponse, error) {
+	if req.Email == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "email is required")
 	}
 
-	// Update user
-	user.ResetToken = securitypkg.GenerateToken()
-
-	err = s.database.UpdateUser(user)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+	if err := s.userService.RequestPasswordReset(ctx, req.Email); err != nil {
+		return nil, err
 	}
 
-	// Write message to broker
-	err = s.broker.WriteMessage(
-		ctx,
-		eventpkg.AUTHORIZATION_REQUEST_PASSWORD_RESET,
-		eventpkg.AuthorizationRequestPasswordReset{
-			ID: user.ID.String(),
-		},
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.RequestPasswordResetResponse{}, nil
+	return &pb.RequestPasswordResetResponse{}, nil
 }
 
-func (s *AuthorizationServer) ConfirmPasswordReset(ctx context.Context, request *protopkg.ConfirmResetPasswordRequest) (*protopkg.ConfirmResetPasswordResponse, error) {
-	// Find user
-	user, err := s.database.SelectUserByResetToken(request.Token)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "user not exist")
+func (s *AuthorizationServer) ConfirmPasswordReset(ctx context.Context, req *pb.ConfirmResetPasswordRequest) (*pb.ConfirmResetPasswordResponse, error) {
+	if req.Token == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "reset token is required")
+	}
+	if req.Password == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "new password is required")
 	}
 
-	// Salt password
-	salt := securitypkg.GenerateSalt()
-
-	hash, err := securitypkg.HashPassword(
-		request.Password,
-		salt,
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+	if err := s.userService.ConfirmPasswordReset(ctx, req.Token, req.Password); err != nil {
+		return nil, err
 	}
 
-	// Update user in database
-	user.Password = hash
-	user.Salt = salt
-
-	err = s.database.UpdateUser(user)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.ConfirmResetPasswordResponse{}, nil
+	return &pb.ConfirmResetPasswordResponse{}, nil
 }
 
-func (s *AuthorizationServer) ChangePassword(ctx context.Context, request *protopkg.ChangePasswordRequest) (*protopkg.ChangePasswordResponse, error) {
-	// Get current user
-	userID, err := middlewarepkg.GetUserID(ctx)
+func (s *AuthorizationServer) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest) (*pb.ChangePasswordResponse, error) {
+	userIDStr, err := middleware.GetUserID(ctx)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, status.Errorf(codes.Unauthenticated, "not authenticated")
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "invalid user ID in token")
 	}
 
-	user, err := s.database.SelectUserByID(userID)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+	if req.OldPassword == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "old password is required")
+	}
+	if req.NewPassword == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "new password is required")
 	}
 
-	// Check password
-	err = securitypkg.ComparePasswords(
-		user.Password,
-		request.OldPassword,
-		user.Salt,
-	)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "password invalid")
+	if err := s.userService.ChangePassword(ctx, userID, req.OldPassword, req.NewPassword); err != nil {
+		return nil, err
 	}
 
-	// Salt password
-	salt := securitypkg.GenerateSalt()
-
-	hash, err := securitypkg.HashPassword(
-		request.NewPassword,
-		salt,
-	)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	// Update user in database
-	user.Password = hash
-	user.Salt = salt
-
-	err = s.database.UpdateUser(user)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.ChangePasswordResponse{}, nil
+	return &pb.ChangePasswordResponse{}, nil
 }
 
-func (s *AuthorizationServer) GetCurrentSession(ctx context.Context, request *protopkg.GetCurrentSessionRequest) (*protopkg.GetCurrentSessionResponse, error) {
-	// Get current session
-	sessionID, err := middlewarepkg.GetSessionID(ctx)
+func (s *AuthorizationServer) GetCurrentSession(ctx context.Context, req *pb.GetCurrentSessionRequest) (*pb.GetCurrentSessionResponse, error) {
+	sessionIDStr, err := middleware.GetSessionID(ctx)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, status.Errorf(codes.Unauthenticated, "not authenticated")
+	}
+	sessionID, err := uuid.Parse(sessionIDStr)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "invalid session ID in token")
 	}
 
-	session, err := s.database.SelectSessionByID(sessionID)
+	session, err := s.userService.GetCurrentSession(ctx, sessionID)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, err
 	}
 
-	return &protopkg.GetCurrentSessionResponse{
-		Session: &protopkg.Session{
+	return &pb.GetCurrentSessionResponse{
+		Session: &pb.Session{
 			SessionId: session.ID.String(),
 			UserAgent: session.UserAgent,
 			IpAddress: session.IpAddress,
 			CreatedAt: timestamppb.New(session.CreatedAt),
 			UpdatedAt: timestamppb.New(session.UpdatedAt),
 		},
-	}, nil
+	},
+	nil
 }
 
-func (s *AuthorizationServer) ListActiveSessions(ctx context.Context, request *protopkg.ListActiveSessionsRequest) (*protopkg.ListActiveSessionsResponse, error) {
-	// Get current session
-	sessionID, err := middlewarepkg.GetSessionID(ctx)
+func (s *AuthorizationServer) ListActiveSessions(ctx context.Context, req *pb.ListActiveSessionsRequest) (*pb.ListActiveSessionsResponse, error) {
+	userIDStr, err := middleware.GetUserID(ctx)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, status.Errorf(codes.Unauthenticated, "not authenticated")
 	}
-
-	session, err := s.database.SelectSessionByID(sessionID)
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, status.Errorf(codes.Internal, "invalid user ID in token")
 	}
 
-	// Get user sessions
-	sessions, err := s.database.SelectSessionsByUserID(session.UserID.String(), request.Cursor, SESSIONS_PER_PAGE+1)
+	sessions, nextCursor, err := s.userService.ListActiveSessions(ctx, userID, req.Cursor, int(req.Limit))
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, err
 	}
 
-	// Build result
-	hasMore := len(sessions) > SESSIONS_PER_PAGE
-
-	var nextCursor string = ""
-	if hasMore && len(sessions) > 0 {
-		nextCursor = sessions[len(sessions)-1].ID.String()
+	pbSessions := make([]*pb.Session, len(sessions))
+	for i, session := range sessions {
+		pbSessions[i] = &pb.Session{
+			SessionId: session.ID.String(),
+			UserAgent: session.UserAgent,
+			IpAddress: session.IpAddress,
+			CreatedAt: timestamppb.New(session.CreatedAt),
+			UpdatedAt: timestamppb.New(session.UpdatedAt),
+		}
 	}
 
-	if len(sessions) == SESSIONS_PER_PAGE+1 {
-		sessions = sessions[:len(sessions)-1]
-	}
-
-	var result []*protopkg.Session
-	for _, session := range sessions {
-		result = append(
-			result,
-			&protopkg.Session{
-				SessionId: session.ID.String(),
-				UserAgent: session.UserAgent,
-				IpAddress: session.IpAddress,
-				CreatedAt: timestamppb.New(session.CreatedAt),
-				UpdatedAt: timestamppb.New(session.UpdatedAt),
-			},
-		)
-	}
-
-	return &protopkg.ListActiveSessionsResponse{
-		Sessions:   result,
-		HasMore:    hasMore,
+	return &pb.ListActiveSessionsResponse{
+		Sessions:   pbSessions,
 		NextCursor: nextCursor,
-	}, nil
+		HasMore:    nextCursor != "",
+	},
+	nil
 }
 
-func (s *AuthorizationServer) RevokeSession(ctx context.Context, request *protopkg.RevokeSessionRequest) (*protopkg.RevokeSessionResponse, error) {
-	// Get current session
-	sessionID, err := middlewarepkg.GetSessionID(ctx)
+func (s *AuthorizationServer) RevokeSession(ctx context.Context, req *pb.RevokeSessionRequest) (*pb.RevokeSessionResponse, error) {
+	currentSessionIDStr, err := middleware.GetSessionID(ctx)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, status.Errorf(codes.Unauthenticated, "not authenticated")
 	}
-
-	userSession, err := s.database.SelectSessionByID(sessionID)
+	currentSessionID, err := uuid.Parse(currentSessionIDStr)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, status.Errorf(codes.Internal, "invalid session ID in token")
 	}
 
-	// Get requested session
-	requestedSession, err := s.database.SelectSessionByID(request.SessionId)
+	sessionIDToRevoke, err := uuid.Parse(req.SessionId)
 	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.InvalidArgument, "internal error")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid session ID format")
 	}
 
-	if userSession.UserID != requestedSession.UserID {
-		s.log.Error("wrong session ownership")
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	if err := s.userService.RevokeSession(ctx, currentSessionID, sessionIDToRevoke); err != nil {
+		return nil, err
 	}
 
-	// Delete session from database
-	err = s.database.DeleteSession(requestedSession)
-	if err != nil {
-		s.log.Error("internal error", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "internal error")
-	}
-
-	return &protopkg.RevokeSessionResponse{}, nil
+	return &pb.RevokeSessionResponse{}, nil
 }
+
