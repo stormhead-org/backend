@@ -14,6 +14,8 @@ import (
 	"github.com/stormhead-org/backend/internal/middleware"
 	"github.com/stormhead-org/backend/internal/orm"
 	"github.com/stormhead-org/backend/internal/proto"
+
+	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
 )
 
 type GRPC struct {
@@ -29,7 +31,7 @@ func NewGRPC(
 	port string,
 	jwt *jwt.JWT,
 	db *orm.PostgresClient,
-	authServer *AuthorizationServer,
+	authServer *authorizationgrpcpkg.AuthorizationServer,
 	communityServer *CommunityServer,
 	postServer *PostServer,
 	commentServer *CommentServer,
@@ -60,8 +62,8 @@ func NewGRPC(
 	proto.RegisterUserServiceServer(grpcServer, userServer)
 
 	// Search API
-	searchServer := NewSearchServer(logger, database, broker)
-	protopkg.RegisterSearchServiceServer(grpcServer, searchServer)
+	// searchServer := NewSearchServer(logger, database, broker)
+	// protopkg.RegisterSearchServiceServer(grpcServer, searchServer)
 
 	// Health API
 	healthServer := health.NewServer()

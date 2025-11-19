@@ -12,11 +12,11 @@ import (
 	clientpkg "github.com/stormhead-org/backend/internal/client"
 	eventpkg "github.com/stormhead-org/backend/internal/event"
 	grpcpkg "github.com/stormhead-org/backend/internal/grpc"
+	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
 	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
 	ormpkg "github.com/stormhead-org/backend/internal/orm"
 	"github.com/stormhead-org/backend/internal/services/community"
 	"github.com/stormhead-org/backend/internal/services/post"
-	"github.com/stormhead-org/backend/internal/services/user"
 )
 
 var serverCommand = &cobra.Command{
@@ -81,19 +81,18 @@ func serverCommandImpl() error {
 			clientpkg.NewHIBPClient,
 
 			// Services
-			user.NewUserService,
 			community.NewCommunityService,
 			post.NewPostService,
 
 			// gRPC Servers
-			grpcpkg.NewAuthorizationServer,
+			authorizationgrpcpkg.NewAuthorizationServer,
 			grpcpkg.NewCommunityServer,
 			grpcpkg.NewPostServer,
 			grpcpkg.NewCommentServer,
 			grpcpkg.NewUserServer,
 
 			// Main gRPC Server
-			func(lc fx.Lifecycle, logger *zap.Logger, jwt *jwtpkg.JWT, db *ormpkg.PostgresClient, authServer *grpcpkg.AuthorizationServer, communityServer *grpcpkg.CommunityServer, postServer *grpcpkg.PostServer, commentServer *grpcpkg.CommentServer, userServer *grpcpkg.UserServer) (*grpcpkg.GRPC, error) {
+			func(lc fx.Lifecycle, logger *zap.Logger, jwt *jwtpkg.JWT, db *ormpkg.PostgresClient, authServer *authorizationgrpcpkg.AuthorizationServer, communityServer *grpcpkg.CommunityServer, postServer *grpcpkg.PostServer, commentServer *grpcpkg.CommentServer, userServer *grpcpkg.UserServer) (*grpcpkg.GRPC, error) {
 				grpcServer, err := grpcpkg.NewGRPC(
 					logger,
 					os.Getenv("GRPC_HOST"),
