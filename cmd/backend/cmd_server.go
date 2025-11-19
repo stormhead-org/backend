@@ -13,6 +13,7 @@ import (
 	eventpkg "github.com/stormhead-org/backend/internal/event"
 	grpcpkg "github.com/stormhead-org/backend/internal/grpc"
 	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
+	communitygrpcpkg "github.com/stormhead-org/backend/internal/grpc/community"
 	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
 	ormpkg "github.com/stormhead-org/backend/internal/orm"
 	"github.com/stormhead-org/backend/internal/services/community"
@@ -86,13 +87,23 @@ func serverCommandImpl() error {
 
 			// gRPC Servers
 			authorizationgrpcpkg.NewAuthorizationServer,
-			grpcpkg.NewCommunityServer,
+			communitygrpcpkg.NewCommunityServer,
 			grpcpkg.NewPostServer,
 			grpcpkg.NewCommentServer,
 			grpcpkg.NewUserServer,
 
 			// Main gRPC Server
-			func(lc fx.Lifecycle, logger *zap.Logger, jwt *jwtpkg.JWT, db *ormpkg.PostgresClient, authServer *authorizationgrpcpkg.AuthorizationServer, communityServer *grpcpkg.CommunityServer, postServer *grpcpkg.PostServer, commentServer *grpcpkg.CommentServer, userServer *grpcpkg.UserServer) (*grpcpkg.GRPC, error) {
+			func(
+				lc fx.Lifecycle,
+				logger *zap.Logger,
+				jwt *jwtpkg.JWT,
+				db *ormpkg.PostgresClient,
+				authServer *authorizationgrpcpkg.AuthorizationServer,
+				communityServer *communitygrpcpkg.CommunityServer,
+				postServer *grpcpkg.PostServer,
+				commentServer *grpcpkg.CommentServer,
+				userServer *grpcpkg.UserServer,
+			) (*grpcpkg.GRPC, error) {
 				grpcServer, err := grpcpkg.NewGRPC(
 					logger,
 					os.Getenv("GRPC_HOST"),
