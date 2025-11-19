@@ -3273,26 +3273,26 @@
         },
         "parameters": [
           {
-            "name": "query",
-            "description": "min 3 chars",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "contentType",
             "in": "query",
             "required": false,
             "type": "string",
             "enum": [
               "CONTENT_TYPE_UNSPECIFIED",
+              "CONTENT_TYPE_COMMUNITIES",
               "CONTENT_TYPE_POSTS",
               "CONTENT_TYPE_COMMENTS",
               "CONTENT_TYPE_USERS",
-              "CONTENT_TYPE_COMMUNITIES",
               "CONTENT_TYPE_ALL"
             ],
             "default": "CONTENT_TYPE_UNSPECIFIED"
+          },
+          {
+            "name": "query",
+            "description": "min 3 chars",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "cursor",
@@ -4410,10 +4410,10 @@
       "type": "string",
       "enum": [
         "CONTENT_TYPE_UNSPECIFIED",
+        "CONTENT_TYPE_COMMUNITIES",
         "CONTENT_TYPE_POSTS",
         "CONTENT_TYPE_COMMENTS",
         "CONTENT_TYPE_USERS",
-        "CONTENT_TYPE_COMMUNITIES",
         "CONTENT_TYPE_ALL"
       ],
       "default": "CONTENT_TYPE_UNSPECIFIED"
@@ -6117,9 +6117,8 @@
     "protoSearchResult": {
       "type": "object",
       "properties": {
-        "resultType": {
-          "type": "string",
-          "title": "post, comment, user, community"
+        "community": {
+          "$ref": "#/definitions/protoCommunity"
         },
         "post": {
           "$ref": "#/definitions/protoPost"
@@ -6130,12 +6129,10 @@
         "user": {
           "$ref": "#/definitions/protoUserProfile"
         },
-        "community": {
-          "$ref": "#/definitions/protoCommunity"
-        },
         "relevanceScore": {
           "type": "number",
-          "format": "float"
+          "format": "float",
+          "title": "TODO:"
         }
       }
     },

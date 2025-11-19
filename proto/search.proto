@@ -12,22 +12,22 @@ import "google/api/annotations.proto";
 
 enum ContentType {
   CONTENT_TYPE_UNSPECIFIED = 0;
-  CONTENT_TYPE_POSTS       = 1;
-  CONTENT_TYPE_COMMENTS    = 2;
-  CONTENT_TYPE_USERS       = 3;
-  CONTENT_TYPE_COMMUNITIES = 4;
+  CONTENT_TYPE_COMMUNITIES = 1;
+  CONTENT_TYPE_POSTS       = 2;
+  CONTENT_TYPE_COMMENTS    = 3;
+  CONTENT_TYPE_USERS       = 4;
   CONTENT_TYPE_ALL         = 5;
 }
 
 message SearchResult {
-  string result_type = 1;  // post, comment, user, community
+  ContentType content_type = 1;
   oneof result {
-    Post post           = 2;
-    Comment comment     = 3;
-    UserProfile user    = 4;
-    Community community = 5;
+    Community community = 2;
+    Post post           = 3;
+    Comment comment     = 4;
+    UserProfile user    = 5;
   }
-  float relevance_score = 6;
+  float relevance_score = 6;  // TODO:
 }
 
 // ============================================================================
@@ -35,8 +35,8 @@ message SearchResult {
 // ============================================================================
 
 message SearchRequest {
-  string query             = 1;  // min 3 chars
-  ContentType content_type = 2;
+  ContentType content_type = 1;
+  string query             = 2;  // min 3 chars
   string cursor            = 3;
   int32 limit              = 4;
 }
