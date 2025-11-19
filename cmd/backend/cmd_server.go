@@ -16,7 +16,6 @@ import (
 	communitygrpcpkg "github.com/stormhead-org/backend/internal/grpc/community"
 	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
 	ormpkg "github.com/stormhead-org/backend/internal/orm"
-	"github.com/stormhead-org/backend/internal/services/community"
 	"github.com/stormhead-org/backend/internal/services/post"
 )
 
@@ -30,6 +29,10 @@ var serverCommand = &cobra.Command{
 }
 
 func serverCommandImpl() error {
+	if os.Getenv("DEBUG") == "1" {
+		godotenv.Load()
+	}
+
 	// Application
 	application := fx.New(
 		// fx.NopLogger,
@@ -46,9 +49,6 @@ func serverCommandImpl() error {
 
 			// Config/Secrets from .env
 			func(logger *zap.Logger) (*jwtpkg.JWT, error) {
-				if os.Getenv("DEBUG") == "1" {
-					godotenv.Load()
-				}
 				jwtSecret := os.Getenv("JWT_SECRET")
 				if jwtSecret == "" {
 					jwtSecret = "123456"
@@ -58,9 +58,6 @@ func serverCommandImpl() error {
 
 			// Clients
 			func(logger *zap.Logger) (*ormpkg.PostgresClient, error) {
-				if os.Getenv("DEBUG") == "1" {
-					godotenv.Load()
-				}
 				return ormpkg.NewPostgresClient(
 					os.Getenv("POSTGRES_HOST"),
 					os.Getenv("POSTGRES_PORT"),
@@ -69,9 +66,6 @@ func serverCommandImpl() error {
 				)
 			},
 			func(logger *zap.Logger) (*eventpkg.KafkaClient, error) {
-				if os.Getenv("DEBUG") == "1" {
-					godotenv.Load()
-				}
 				return eventpkg.NewKafkaClient(
 					os.Getenv("KAFKA_HOST"),
 					os.Getenv("KAFKA_PORT"),
@@ -82,7 +76,6 @@ func serverCommandImpl() error {
 			clientpkg.NewHIBPClient,
 
 			// Services
-			community.NewCommunityService,
 			post.NewPostService,
 
 			// gRPC Servers
@@ -95,7 +88,7 @@ func serverCommandImpl() error {
 			// Main gRPC Server
 			func(
 				lc fx.Lifecycle,
-				logger *zap.Logger,
+				log *zap.Logger,
 				jwt *jwtpkg.JWT,
 				db *ormpkg.PostgresClient,
 				authServer *authorizationgrpcpkg.AuthorizationServer,
@@ -105,11 +98,11 @@ func serverCommandImpl() error {
 				userServer *grpcpkg.UserServer,
 			) (*grpcpkg.GRPC, error) {
 				grpcServer, err := grpcpkg.NewGRPC(
-					logger,
-					os.Getenv("GRPC_HOST"),
-					os.Getenv("GRPC_PORT"),
+					log,
 					jwt,
 					db,
+					os.Getenv("GRPC_HOST"),
+					os.Getenv("GRPC_PORT"),
 					authServer,
 					communityServer,
 					postServer,

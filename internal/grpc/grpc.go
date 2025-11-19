@@ -28,29 +28,22 @@ type GRPC struct {
 
 func NewGRPC(
 	logger *zap.Logger,
-	host string,
-	port string,
 	jwt *jwt.JWT,
 	db *orm.PostgresClient,
+	host string,
+	port string,
 	authServer *authorizationgrpcpkg.AuthorizationServer,
 	communityServer *communitygrpcpkg.CommunityServer,
 	postServer *PostServer,
 	commentServer *CommentServer,
 	userServer *UserServer,
 ) (*GRPC, error) {
-	if host == "" {
-		host = "127.0.0.1"
-	}
-	if port == "" {
-		port = "8080"
-	}
-
-	rateLimiter := middleware.NewRateLimiterInterceptor(5, 600)
+	rateLimitMiddleware := middleware.NewRateLimitMiddleware(5, 600)
 	authMiddleware := middleware.NewAuthorizationMiddleware(logger, jwt, db)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			rateLimiter.Unary(),
+			rateLimitMiddleware,
 			authMiddleware,
 		),
 	)

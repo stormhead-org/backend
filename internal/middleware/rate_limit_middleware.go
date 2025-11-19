@@ -11,25 +11,26 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// RateLimiterInterceptor provides a gRPC unary interceptor for rate limiting.
-type RateLimiterInterceptor struct {
-	mu        sync.Mutex
-	limiters  map[string]*rate.Limiter
-	rps       rate.Limit
-	burst     int
+// RateLimitMiddleware provides a gRPC unary interceptor for rate limiting.
+type RateLimitMiddleware struct {
+	mu       sync.Mutex
+	limiters map[string]*rate.Limiter
+	rps      rate.Limit
+	burst    int
 }
 
-// NewRateLimiterInterceptor creates a new rate limiter interceptor.
-func NewRateLimiterInterceptor(rps float64, burst int) *RateLimiterInterceptor {
-	return &RateLimiterInterceptor{
-		limiters:  make(map[string]*rate.Limiter),
-		rps:       rate.Limit(rps),
-		burst:     burst,
+// NewRateLimitMiddleware creates a new rate limiter interceptor.
+func NewRateLimitMiddleware(rps float64, burst int) grpc.UnaryServerInterceptor {
+	result := &RateLimitMiddleware{
+		limiters: make(map[string]*rate.Limiter),
+		rps:      rate.Limit(rps),
+		burst:    burst,
 	}
+	return result.Unary()
 }
 
 // Unary returns a gRPC unary server interceptor that performs rate limiting.
-func (i *RateLimiterInterceptor) Unary() grpc.UnaryServerInterceptor {
+func (i *RateLimitMiddleware) Unary() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
