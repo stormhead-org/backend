@@ -17,6 +17,7 @@ import (
 
 	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
 	communitygrpcpkg "github.com/stormhead-org/backend/internal/grpc/community"
+	postgrpcpkg "github.com/stormhead-org/backend/internal/grpc/post"
 )
 
 type GRPC struct {
@@ -34,7 +35,7 @@ func NewGRPC(
 	port string,
 	authServer *authorizationgrpcpkg.AuthorizationServer,
 	communityServer *communitygrpcpkg.CommunityServer,
-	postServer *PostServer,
+	postServer *postgrpcpkg.PostServer,
 	commentServer *CommentServer,
 	userServer *UserServer,
 ) (*GRPC, error) {

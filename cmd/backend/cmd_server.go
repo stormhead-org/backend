@@ -14,9 +14,9 @@ import (
 	grpcpkg "github.com/stormhead-org/backend/internal/grpc"
 	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
 	communitygrpcpkg "github.com/stormhead-org/backend/internal/grpc/community"
+	postgrpcpkg "github.com/stormhead-org/backend/internal/grpc/post"
 	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
 	ormpkg "github.com/stormhead-org/backend/internal/orm"
-	"github.com/stormhead-org/backend/internal/services/post"
 )
 
 var serverCommand = &cobra.Command{
@@ -75,13 +75,10 @@ func serverCommandImpl() error {
 			},
 			clientpkg.NewHIBPClient,
 
-			// Services
-			post.NewPostService,
-
 			// gRPC Servers
 			authorizationgrpcpkg.NewAuthorizationServer,
 			communitygrpcpkg.NewCommunityServer,
-			grpcpkg.NewPostServer,
+			postgrpcpkg.NewPostServer,
 			grpcpkg.NewCommentServer,
 			grpcpkg.NewUserServer,
 
@@ -93,7 +90,7 @@ func serverCommandImpl() error {
 				db *ormpkg.PostgresClient,
 				authServer *authorizationgrpcpkg.AuthorizationServer,
 				communityServer *communitygrpcpkg.CommunityServer,
-				postServer *grpcpkg.PostServer,
+				postServer *postgrpcpkg.PostServer,
 				commentServer *grpcpkg.CommentServer,
 				userServer *grpcpkg.UserServer,
 			) (*grpcpkg.GRPC, error) {
