@@ -81,7 +81,8 @@ func (ContentType) EnumDescriptor() ([]byte, []int) {
 }
 
 type SearchResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	ContentType ContentType            `protobuf:"varint,1,opt,name=content_type,json=contentType,proto3,enum=proto.ContentType" json:"content_type,omitempty"`
 	// Types that are valid to be assigned to Result:
 	//
 	//	*SearchResult_Community
@@ -89,7 +90,7 @@ type SearchResult struct {
 	//	*SearchResult_Comment
 	//	*SearchResult_User
 	Result         isSearchResult_Result `protobuf_oneof:"result"`
-	RelevanceScore float32               `protobuf:"fixed32,5,opt,name=relevance_score,json=relevanceScore,proto3" json:"relevance_score,omitempty"` // TODO:
+	RelevanceScore float32               `protobuf:"fixed32,6,opt,name=relevance_score,json=relevanceScore,proto3" json:"relevance_score,omitempty"` // TODO:
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -122,6 +123,13 @@ func (x *SearchResult) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SearchResult.ProtoReflect.Descriptor instead.
 func (*SearchResult) Descriptor() ([]byte, []int) {
 	return file_search_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SearchResult) GetContentType() ContentType {
+	if x != nil {
+		return x.ContentType
+	}
+	return ContentType_CONTENT_TYPE_UNSPECIFIED
 }
 
 func (x *SearchResult) GetResult() isSearchResult_Result {
@@ -179,19 +187,19 @@ type isSearchResult_Result interface {
 }
 
 type SearchResult_Community struct {
-	Community *Community `protobuf:"bytes,1,opt,name=community,proto3,oneof"`
+	Community *Community `protobuf:"bytes,2,opt,name=community,proto3,oneof"`
 }
 
 type SearchResult_Post struct {
-	Post *Post `protobuf:"bytes,2,opt,name=post,proto3,oneof"`
+	Post *Post `protobuf:"bytes,3,opt,name=post,proto3,oneof"`
 }
 
 type SearchResult_Comment struct {
-	Comment *Comment `protobuf:"bytes,3,opt,name=comment,proto3,oneof"`
+	Comment *Comment `protobuf:"bytes,4,opt,name=comment,proto3,oneof"`
 }
 
 type SearchResult_User struct {
-	User *UserProfile `protobuf:"bytes,4,opt,name=user,proto3,oneof"`
+	User *UserProfile `protobuf:"bytes,5,opt,name=user,proto3,oneof"`
 }
 
 func (*SearchResult_Community) isSearchResult_Result() {}
@@ -334,13 +342,14 @@ var File_search_proto protoreflect.FileDescriptor
 
 const file_search_proto_rawDesc = "" +
 	"\n" +
-	"\fsearch.proto\x12\x05proto\x1a\fentity.proto\x1a\x1cgoogle/api/annotations.proto\"\xec\x01\n" +
-	"\fSearchResult\x120\n" +
-	"\tcommunity\x18\x01 \x01(\v2\x10.proto.CommunityH\x00R\tcommunity\x12!\n" +
-	"\x04post\x18\x02 \x01(\v2\v.proto.PostH\x00R\x04post\x12*\n" +
-	"\acomment\x18\x03 \x01(\v2\x0e.proto.CommentH\x00R\acomment\x12(\n" +
-	"\x04user\x18\x04 \x01(\v2\x12.proto.UserProfileH\x00R\x04user\x12'\n" +
-	"\x0frelevance_score\x18\x05 \x01(\x02R\x0erelevanceScoreB\b\n" +
+	"\fsearch.proto\x12\x05proto\x1a\fentity.proto\x1a\x1cgoogle/api/annotations.proto\"\xa3\x02\n" +
+	"\fSearchResult\x125\n" +
+	"\fcontent_type\x18\x01 \x01(\x0e2\x12.proto.ContentTypeR\vcontentType\x120\n" +
+	"\tcommunity\x18\x02 \x01(\v2\x10.proto.CommunityH\x00R\tcommunity\x12!\n" +
+	"\x04post\x18\x03 \x01(\v2\v.proto.PostH\x00R\x04post\x12*\n" +
+	"\acomment\x18\x04 \x01(\v2\x0e.proto.CommentH\x00R\acomment\x12(\n" +
+	"\x04user\x18\x05 \x01(\v2\x12.proto.UserProfileH\x00R\x04user\x12'\n" +
+	"\x0frelevance_score\x18\x06 \x01(\x02R\x0erelevanceScoreB\b\n" +
 	"\x06result\"\x8a\x01\n" +
 	"\rSearchRequest\x125\n" +
 	"\fcontent_type\x18\x01 \x01(\x0e2\x12.proto.ContentTypeR\vcontentType\x12\x14\n" +
@@ -387,19 +396,20 @@ var file_search_proto_goTypes = []any{
 	(*UserProfile)(nil),    // 7: proto.UserProfile
 }
 var file_search_proto_depIdxs = []int32{
-	4, // 0: proto.SearchResult.community:type_name -> proto.Community
-	5, // 1: proto.SearchResult.post:type_name -> proto.Post
-	6, // 2: proto.SearchResult.comment:type_name -> proto.Comment
-	7, // 3: proto.SearchResult.user:type_name -> proto.UserProfile
-	0, // 4: proto.SearchRequest.content_type:type_name -> proto.ContentType
-	1, // 5: proto.SearchResponse.results:type_name -> proto.SearchResult
-	2, // 6: proto.SearchService.Search:input_type -> proto.SearchRequest
-	3, // 7: proto.SearchService.Search:output_type -> proto.SearchResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	0, // 0: proto.SearchResult.content_type:type_name -> proto.ContentType
+	4, // 1: proto.SearchResult.community:type_name -> proto.Community
+	5, // 2: proto.SearchResult.post:type_name -> proto.Post
+	6, // 3: proto.SearchResult.comment:type_name -> proto.Comment
+	7, // 4: proto.SearchResult.user:type_name -> proto.UserProfile
+	0, // 5: proto.SearchRequest.content_type:type_name -> proto.ContentType
+	1, // 6: proto.SearchResponse.results:type_name -> proto.SearchResult
+	2, // 7: proto.SearchService.Search:input_type -> proto.SearchRequest
+	3, // 8: proto.SearchService.Search:output_type -> proto.SearchResponse
+	8, // [8:9] is the sub-list for method output_type
+	7, // [7:8] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_search_proto_init() }

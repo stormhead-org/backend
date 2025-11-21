@@ -22,6 +22,52 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ListCommunitiesRequest_SortOrder int32
+
+const (
+	ListCommunitiesRequest_NEWEST     ListCommunitiesRequest_SortOrder = 0
+	ListCommunitiesRequest_POPULARITY ListCommunitiesRequest_SortOrder = 1
+)
+
+// Enum value maps for ListCommunitiesRequest_SortOrder.
+var (
+	ListCommunitiesRequest_SortOrder_name = map[int32]string{
+		0: "NEWEST",
+		1: "POPULARITY",
+	}
+	ListCommunitiesRequest_SortOrder_value = map[string]int32{
+		"NEWEST":     0,
+		"POPULARITY": 1,
+	}
+)
+
+func (x ListCommunitiesRequest_SortOrder) Enum() *ListCommunitiesRequest_SortOrder {
+	p := new(ListCommunitiesRequest_SortOrder)
+	*p = x
+	return p
+}
+
+func (x ListCommunitiesRequest_SortOrder) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListCommunitiesRequest_SortOrder) Descriptor() protoreflect.EnumDescriptor {
+	return file_community_proto_enumTypes[0].Descriptor()
+}
+
+func (ListCommunitiesRequest_SortOrder) Type() protoreflect.EnumType {
+	return &file_community_proto_enumTypes[0]
+}
+
+func (x ListCommunitiesRequest_SortOrder) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListCommunitiesRequest_SortOrder.Descriptor instead.
+func (ListCommunitiesRequest_SortOrder) EnumDescriptor() ([]byte, []int) {
+	return file_community_proto_rawDescGZIP(), []int{10, 0}
+}
+
 type ValidateCommunitySlugRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Slug          string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
@@ -414,27 +460,28 @@ func (x *UpdateCommunityResponse) GetCommunity() *Community {
 	return nil
 }
 
-type DeleteCommunityRequest struct {
+type ArchiveCommunityRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CommunityId   string                 `protobuf:"bytes,1,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"`
+	Confirm       bool                   `protobuf:"varint,2,opt,name=confirm,proto3" json:"confirm,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteCommunityRequest) Reset() {
-	*x = DeleteCommunityRequest{}
+func (x *ArchiveCommunityRequest) Reset() {
+	*x = ArchiveCommunityRequest{}
 	mi := &file_community_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteCommunityRequest) String() string {
+func (x *ArchiveCommunityRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteCommunityRequest) ProtoMessage() {}
+func (*ArchiveCommunityRequest) ProtoMessage() {}
 
-func (x *DeleteCommunityRequest) ProtoReflect() protoreflect.Message {
+func (x *ArchiveCommunityRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_community_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -446,38 +493,45 @@ func (x *DeleteCommunityRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteCommunityRequest.ProtoReflect.Descriptor instead.
-func (*DeleteCommunityRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ArchiveCommunityRequest.ProtoReflect.Descriptor instead.
+func (*ArchiveCommunityRequest) Descriptor() ([]byte, []int) {
 	return file_community_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *DeleteCommunityRequest) GetCommunityId() string {
+func (x *ArchiveCommunityRequest) GetCommunityId() string {
 	if x != nil {
 		return x.CommunityId
 	}
 	return ""
 }
 
-type DeleteCommunityResponse struct {
+func (x *ArchiveCommunityRequest) GetConfirm() bool {
+	if x != nil {
+		return x.Confirm
+	}
+	return false
+}
+
+type ArchiveCommunityResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteCommunityResponse) Reset() {
-	*x = DeleteCommunityResponse{}
+func (x *ArchiveCommunityResponse) Reset() {
+	*x = ArchiveCommunityResponse{}
 	mi := &file_community_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteCommunityResponse) String() string {
+func (x *ArchiveCommunityResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteCommunityResponse) ProtoMessage() {}
+func (*ArchiveCommunityResponse) ProtoMessage() {}
 
-func (x *DeleteCommunityResponse) ProtoReflect() protoreflect.Message {
+func (x *ArchiveCommunityResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_community_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -489,15 +543,17 @@ func (x *DeleteCommunityResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteCommunityResponse.ProtoReflect.Descriptor instead.
-func (*DeleteCommunityResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ArchiveCommunityResponse.ProtoReflect.Descriptor instead.
+func (*ArchiveCommunityResponse) Descriptor() ([]byte, []int) {
 	return file_community_proto_rawDescGZIP(), []int{9}
 }
 
 type ListCommunitiesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Cursor        string                 `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	state         protoimpl.MessageState           `protogen:"open.v1"`
+	Cursor        string                           `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Limit         int32                            `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	SortBy        ListCommunitiesRequest_SortOrder `protobuf:"varint,3,opt,name=sort_by,json=sortBy,proto3,enum=proto.ListCommunitiesRequest_SortOrder" json:"sort_by,omitempty"`
+	IncludeBanned bool                             `protobuf:"varint,4,opt,name=include_banned,json=includeBanned,proto3" json:"include_banned,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -544,6 +600,20 @@ func (x *ListCommunitiesRequest) GetLimit() int32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *ListCommunitiesRequest) GetSortBy() ListCommunitiesRequest_SortOrder {
+	if x != nil {
+		return x.SortBy
+	}
+	return ListCommunitiesRequest_NEWEST
+}
+
+func (x *ListCommunitiesRequest) GetIncludeBanned() bool {
+	if x != nil {
+		return x.IncludeBanned
+	}
+	return false
 }
 
 type ListCommunitiesResponse struct {
@@ -1050,13 +1120,21 @@ const file_community_proto_rawDesc = "" +
 	"\f_descriptionB\b\n" +
 	"\x06_rules\"I\n" +
 	"\x17UpdateCommunityResponse\x12.\n" +
-	"\tcommunity\x18\x01 \x01(\v2\x10.proto.CommunityR\tcommunity\";\n" +
-	"\x16DeleteCommunityRequest\x12!\n" +
-	"\fcommunity_id\x18\x01 \x01(\tR\vcommunityId\"\x19\n" +
-	"\x17DeleteCommunityResponse\"F\n" +
+	"\tcommunity\x18\x01 \x01(\v2\x10.proto.CommunityR\tcommunity\"V\n" +
+	"\x17ArchiveCommunityRequest\x12!\n" +
+	"\fcommunity_id\x18\x01 \x01(\tR\vcommunityId\x12\x18\n" +
+	"\aconfirm\x18\x02 \x01(\bR\aconfirm\"\x1a\n" +
+	"\x18ArchiveCommunityResponse\"\xd8\x01\n" +
 	"\x16ListCommunitiesRequest\x12\x16\n" +
 	"\x06cursor\x18\x01 \x01(\tR\x06cursor\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\x89\x01\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12@\n" +
+	"\asort_by\x18\x03 \x01(\x0e2'.proto.ListCommunitiesRequest.SortOrderR\x06sortBy\x12%\n" +
+	"\x0einclude_banned\x18\x04 \x01(\bR\rincludeBanned\"'\n" +
+	"\tSortOrder\x12\n" +
+	"\n" +
+	"\x06NEWEST\x10\x00\x12\x0e\n" +
+	"\n" +
+	"POPULARITY\x10\x01\"\x89\x01\n" +
 	"\x17ListCommunitiesResponse\x122\n" +
 	"\vcommunities\x18\x01 \x03(\v2\x10.proto.CommunityR\vcommunities\x12\x1f\n" +
 	"\vnext_cursor\x18\x02 \x01(\tR\n" +
@@ -1079,14 +1157,14 @@ const file_community_proto_rawDesc = "" +
 	"\fcommunity_id\x18\x01 \x01(\tR\vcommunityId\x12 \n" +
 	"\fnew_owner_id\x18\x02 \x01(\tR\n" +
 	"newOwnerId\"$\n" +
-	"\"TransferCommunityOwnershipResponse2\x8d\n" +
+	"\"TransferCommunityOwnershipResponse2\x9b\n" +
 	"\n" +
 	"\x10CommunityService\x12\x89\x01\n" +
 	"\x15ValidateCommunitySlug\x12#.proto.ValidateCommunitySlugRequest\x1a$.proto.ValidateCommunitySlugResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/communities/validate-slug\x12`\n" +
 	"\x06Create\x12\x1d.proto.CreateCommunityRequest\x1a\x1e.proto.CreateCommunityResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/communities\x12c\n" +
 	"\x03Get\x12\x1a.proto.GetCommunityRequest\x1a\x1b.proto.GetCommunityResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/communities/{community_id}\x12o\n" +
-	"\x06Update\x12\x1d.proto.UpdateCommunityRequest\x1a\x1e.proto.UpdateCommunityResponse\"&\x82\xd3\xe4\x93\x02 :\x01*2\x1b/communities/{community_id}\x12l\n" +
-	"\x06Delete\x12\x1d.proto.DeleteCommunityRequest\x1a\x1e.proto.DeleteCommunityResponse\"#\x82\xd3\xe4\x93\x02\x1d*\x1b/communities/{community_id}\x12f\n" +
+	"\x06Update\x12\x1d.proto.UpdateCommunityRequest\x1a\x1e.proto.UpdateCommunityResponse\"&\x82\xd3\xe4\x93\x02 :\x01*2\x1b/communities/{community_id}\x12z\n" +
+	"\aArchive\x12\x1e.proto.ArchiveCommunityRequest\x1a\x1f.proto.ArchiveCommunityResponse\".\x82\xd3\xe4\x93\x02(:\x01*\"#/communities/{community_id}/archive\x12f\n" +
 	"\x0fListCommunities\x12\x1d.proto.ListCommunitiesRequest\x1a\x1e.proto.ListCommunitiesResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/communities\x12k\n" +
 	"\x04Join\x12\x1b.proto.JoinCommunityRequest\x1a\x1c.proto.JoinCommunityResponse\"(\x82\xd3\xe4\x93\x02\"\" /communities/{community_id}/join\x12o\n" +
 	"\x05Leave\x12\x1c.proto.LeaveCommunityRequest\x1a\x1d.proto.LeaveCommunityResponse\")\x82\xd3\xe4\x93\x02#\"!/communities/{community_id}/leave\x12j\n" +
@@ -1106,64 +1184,67 @@ func file_community_proto_rawDescGZIP() []byte {
 	return file_community_proto_rawDescData
 }
 
+var file_community_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_community_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_community_proto_goTypes = []any{
-	(*ValidateCommunitySlugRequest)(nil),       // 0: proto.ValidateCommunitySlugRequest
-	(*ValidateCommunitySlugResponse)(nil),      // 1: proto.ValidateCommunitySlugResponse
-	(*CreateCommunityRequest)(nil),             // 2: proto.CreateCommunityRequest
-	(*CreateCommunityResponse)(nil),            // 3: proto.CreateCommunityResponse
-	(*GetCommunityRequest)(nil),                // 4: proto.GetCommunityRequest
-	(*GetCommunityResponse)(nil),               // 5: proto.GetCommunityResponse
-	(*UpdateCommunityRequest)(nil),             // 6: proto.UpdateCommunityRequest
-	(*UpdateCommunityResponse)(nil),            // 7: proto.UpdateCommunityResponse
-	(*DeleteCommunityRequest)(nil),             // 8: proto.DeleteCommunityRequest
-	(*DeleteCommunityResponse)(nil),            // 9: proto.DeleteCommunityResponse
-	(*ListCommunitiesRequest)(nil),             // 10: proto.ListCommunitiesRequest
-	(*ListCommunitiesResponse)(nil),            // 11: proto.ListCommunitiesResponse
-	(*JoinCommunityRequest)(nil),               // 12: proto.JoinCommunityRequest
-	(*JoinCommunityResponse)(nil),              // 13: proto.JoinCommunityResponse
-	(*LeaveCommunityRequest)(nil),              // 14: proto.LeaveCommunityRequest
-	(*LeaveCommunityResponse)(nil),             // 15: proto.LeaveCommunityResponse
-	(*BanCommunityRequest)(nil),                // 16: proto.BanCommunityRequest
-	(*BanCommunityResponse)(nil),               // 17: proto.BanCommunityResponse
-	(*UnbanCommunityRequest)(nil),              // 18: proto.UnbanCommunityRequest
-	(*UnbanCommunityResponse)(nil),             // 19: proto.UnbanCommunityResponse
-	(*TransferCommunityOwnershipRequest)(nil),  // 20: proto.TransferCommunityOwnershipRequest
-	(*TransferCommunityOwnershipResponse)(nil), // 21: proto.TransferCommunityOwnershipResponse
-	(*Community)(nil),                          // 22: proto.Community
+	(ListCommunitiesRequest_SortOrder)(0),      // 0: proto.ListCommunitiesRequest.SortOrder
+	(*ValidateCommunitySlugRequest)(nil),       // 1: proto.ValidateCommunitySlugRequest
+	(*ValidateCommunitySlugResponse)(nil),      // 2: proto.ValidateCommunitySlugResponse
+	(*CreateCommunityRequest)(nil),             // 3: proto.CreateCommunityRequest
+	(*CreateCommunityResponse)(nil),            // 4: proto.CreateCommunityResponse
+	(*GetCommunityRequest)(nil),                // 5: proto.GetCommunityRequest
+	(*GetCommunityResponse)(nil),               // 6: proto.GetCommunityResponse
+	(*UpdateCommunityRequest)(nil),             // 7: proto.UpdateCommunityRequest
+	(*UpdateCommunityResponse)(nil),            // 8: proto.UpdateCommunityResponse
+	(*ArchiveCommunityRequest)(nil),            // 9: proto.ArchiveCommunityRequest
+	(*ArchiveCommunityResponse)(nil),           // 10: proto.ArchiveCommunityResponse
+	(*ListCommunitiesRequest)(nil),             // 11: proto.ListCommunitiesRequest
+	(*ListCommunitiesResponse)(nil),            // 12: proto.ListCommunitiesResponse
+	(*JoinCommunityRequest)(nil),               // 13: proto.JoinCommunityRequest
+	(*JoinCommunityResponse)(nil),              // 14: proto.JoinCommunityResponse
+	(*LeaveCommunityRequest)(nil),              // 15: proto.LeaveCommunityRequest
+	(*LeaveCommunityResponse)(nil),             // 16: proto.LeaveCommunityResponse
+	(*BanCommunityRequest)(nil),                // 17: proto.BanCommunityRequest
+	(*BanCommunityResponse)(nil),               // 18: proto.BanCommunityResponse
+	(*UnbanCommunityRequest)(nil),              // 19: proto.UnbanCommunityRequest
+	(*UnbanCommunityResponse)(nil),             // 20: proto.UnbanCommunityResponse
+	(*TransferCommunityOwnershipRequest)(nil),  // 21: proto.TransferCommunityOwnershipRequest
+	(*TransferCommunityOwnershipResponse)(nil), // 22: proto.TransferCommunityOwnershipResponse
+	(*Community)(nil),                          // 23: proto.Community
 }
 var file_community_proto_depIdxs = []int32{
-	22, // 0: proto.CreateCommunityResponse.community:type_name -> proto.Community
-	22, // 1: proto.GetCommunityResponse.community:type_name -> proto.Community
-	22, // 2: proto.UpdateCommunityResponse.community:type_name -> proto.Community
-	22, // 3: proto.ListCommunitiesResponse.communities:type_name -> proto.Community
-	0,  // 4: proto.CommunityService.ValidateCommunitySlug:input_type -> proto.ValidateCommunitySlugRequest
-	2,  // 5: proto.CommunityService.Create:input_type -> proto.CreateCommunityRequest
-	4,  // 6: proto.CommunityService.Get:input_type -> proto.GetCommunityRequest
-	6,  // 7: proto.CommunityService.Update:input_type -> proto.UpdateCommunityRequest
-	8,  // 8: proto.CommunityService.Delete:input_type -> proto.DeleteCommunityRequest
-	10, // 9: proto.CommunityService.ListCommunities:input_type -> proto.ListCommunitiesRequest
-	12, // 10: proto.CommunityService.Join:input_type -> proto.JoinCommunityRequest
-	14, // 11: proto.CommunityService.Leave:input_type -> proto.LeaveCommunityRequest
-	16, // 12: proto.CommunityService.Ban:input_type -> proto.BanCommunityRequest
-	18, // 13: proto.CommunityService.Unban:input_type -> proto.UnbanCommunityRequest
-	20, // 14: proto.CommunityService.TransferOwnership:input_type -> proto.TransferCommunityOwnershipRequest
-	1,  // 15: proto.CommunityService.ValidateCommunitySlug:output_type -> proto.ValidateCommunitySlugResponse
-	3,  // 16: proto.CommunityService.Create:output_type -> proto.CreateCommunityResponse
-	5,  // 17: proto.CommunityService.Get:output_type -> proto.GetCommunityResponse
-	7,  // 18: proto.CommunityService.Update:output_type -> proto.UpdateCommunityResponse
-	9,  // 19: proto.CommunityService.Delete:output_type -> proto.DeleteCommunityResponse
-	11, // 20: proto.CommunityService.ListCommunities:output_type -> proto.ListCommunitiesResponse
-	13, // 21: proto.CommunityService.Join:output_type -> proto.JoinCommunityResponse
-	15, // 22: proto.CommunityService.Leave:output_type -> proto.LeaveCommunityResponse
-	17, // 23: proto.CommunityService.Ban:output_type -> proto.BanCommunityResponse
-	19, // 24: proto.CommunityService.Unban:output_type -> proto.UnbanCommunityResponse
-	21, // 25: proto.CommunityService.TransferOwnership:output_type -> proto.TransferCommunityOwnershipResponse
-	15, // [15:26] is the sub-list for method output_type
-	4,  // [4:15] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	23, // 0: proto.CreateCommunityResponse.community:type_name -> proto.Community
+	23, // 1: proto.GetCommunityResponse.community:type_name -> proto.Community
+	23, // 2: proto.UpdateCommunityResponse.community:type_name -> proto.Community
+	0,  // 3: proto.ListCommunitiesRequest.sort_by:type_name -> proto.ListCommunitiesRequest.SortOrder
+	23, // 4: proto.ListCommunitiesResponse.communities:type_name -> proto.Community
+	1,  // 5: proto.CommunityService.ValidateCommunitySlug:input_type -> proto.ValidateCommunitySlugRequest
+	3,  // 6: proto.CommunityService.Create:input_type -> proto.CreateCommunityRequest
+	5,  // 7: proto.CommunityService.Get:input_type -> proto.GetCommunityRequest
+	7,  // 8: proto.CommunityService.Update:input_type -> proto.UpdateCommunityRequest
+	9,  // 9: proto.CommunityService.Archive:input_type -> proto.ArchiveCommunityRequest
+	11, // 10: proto.CommunityService.ListCommunities:input_type -> proto.ListCommunitiesRequest
+	13, // 11: proto.CommunityService.Join:input_type -> proto.JoinCommunityRequest
+	15, // 12: proto.CommunityService.Leave:input_type -> proto.LeaveCommunityRequest
+	17, // 13: proto.CommunityService.Ban:input_type -> proto.BanCommunityRequest
+	19, // 14: proto.CommunityService.Unban:input_type -> proto.UnbanCommunityRequest
+	21, // 15: proto.CommunityService.TransferOwnership:input_type -> proto.TransferCommunityOwnershipRequest
+	2,  // 16: proto.CommunityService.ValidateCommunitySlug:output_type -> proto.ValidateCommunitySlugResponse
+	4,  // 17: proto.CommunityService.Create:output_type -> proto.CreateCommunityResponse
+	6,  // 18: proto.CommunityService.Get:output_type -> proto.GetCommunityResponse
+	8,  // 19: proto.CommunityService.Update:output_type -> proto.UpdateCommunityResponse
+	10, // 20: proto.CommunityService.Archive:output_type -> proto.ArchiveCommunityResponse
+	12, // 21: proto.CommunityService.ListCommunities:output_type -> proto.ListCommunitiesResponse
+	14, // 22: proto.CommunityService.Join:output_type -> proto.JoinCommunityResponse
+	16, // 23: proto.CommunityService.Leave:output_type -> proto.LeaveCommunityResponse
+	18, // 24: proto.CommunityService.Ban:output_type -> proto.BanCommunityResponse
+	20, // 25: proto.CommunityService.Unban:output_type -> proto.UnbanCommunityResponse
+	22, // 26: proto.CommunityService.TransferOwnership:output_type -> proto.TransferCommunityOwnershipResponse
+	16, // [16:27] is the sub-list for method output_type
+	5,  // [5:16] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_community_proto_init() }
@@ -1178,13 +1259,14 @@ func file_community_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_community_proto_rawDesc), len(file_community_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_community_proto_goTypes,
 		DependencyIndexes: file_community_proto_depIdxs,
+		EnumInfos:         file_community_proto_enumTypes,
 		MessageInfos:      file_community_proto_msgTypes,
 	}.Build()
 	File_community_proto = out.File

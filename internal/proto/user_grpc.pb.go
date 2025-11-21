@@ -25,6 +25,7 @@ const (
 	UserService_GetStatistics_FullMethodName   = "/proto.UserService/GetStatistics"
 	UserService_ListCommunities_FullMethodName = "/proto.UserService/ListCommunities"
 	UserService_ListPosts_FullMethodName       = "/proto.UserService/ListPosts"
+	UserService_ListBookmarks_FullMethodName   = "/proto.UserService/ListBookmarks"
 	UserService_ListComments_FullMethodName    = "/proto.UserService/ListComments"
 	UserService_Follow_FullMethodName          = "/proto.UserService/Follow"
 	UserService_Unfollow_FullMethodName        = "/proto.UserService/Unfollow"
@@ -45,6 +46,7 @@ type UserServiceClient interface {
 	// List Operations
 	ListCommunities(ctx context.Context, in *ListUserCommunitiesRequest, opts ...grpc.CallOption) (*ListUserCommunitiesResponse, error)
 	ListPosts(ctx context.Context, in *ListUserPostsRequest, opts ...grpc.CallOption) (*ListUserPostsResponse, error)
+	ListBookmarks(ctx context.Context, in *ListBookmarksRequest, opts ...grpc.CallOption) (*ListBookmarksResponse, error)
 	ListComments(ctx context.Context, in *ListUserCommentsRequest, opts ...grpc.CallOption) (*ListUserCommentsResponse, error)
 	// Follow Operations
 	Follow(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error)
@@ -123,6 +125,16 @@ func (c *userServiceClient) ListPosts(ctx context.Context, in *ListUserPostsRequ
 	return out, nil
 }
 
+func (c *userServiceClient) ListBookmarks(ctx context.Context, in *ListBookmarksRequest, opts ...grpc.CallOption) (*ListBookmarksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBookmarksResponse)
+	err := c.cc.Invoke(ctx, UserService_ListBookmarks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) ListComments(ctx context.Context, in *ListUserCommentsRequest, opts ...grpc.CallOption) (*ListUserCommentsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListUserCommentsResponse)
@@ -195,6 +207,7 @@ type UserServiceServer interface {
 	// List Operations
 	ListCommunities(context.Context, *ListUserCommunitiesRequest) (*ListUserCommunitiesResponse, error)
 	ListPosts(context.Context, *ListUserPostsRequest) (*ListUserPostsResponse, error)
+	ListBookmarks(context.Context, *ListBookmarksRequest) (*ListBookmarksResponse, error)
 	ListComments(context.Context, *ListUserCommentsRequest) (*ListUserCommentsResponse, error)
 	// Follow Operations
 	Follow(context.Context, *FollowRequest) (*FollowResponse, error)
@@ -230,6 +243,9 @@ func (UnimplementedUserServiceServer) ListCommunities(context.Context, *ListUser
 }
 func (UnimplementedUserServiceServer) ListPosts(context.Context, *ListUserPostsRequest) (*ListUserPostsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPosts not implemented")
+}
+func (UnimplementedUserServiceServer) ListBookmarks(context.Context, *ListBookmarksRequest) (*ListBookmarksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBookmarks not implemented")
 }
 func (UnimplementedUserServiceServer) ListComments(context.Context, *ListUserCommentsRequest) (*ListUserCommentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListComments not implemented")
@@ -378,6 +394,24 @@ func _UserService_ListPosts_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_ListBookmarks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBookmarksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListBookmarks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListBookmarks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListBookmarks(ctx, req.(*ListBookmarksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_ListComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListUserCommentsRequest)
 	if err := dec(in); err != nil {
@@ -516,6 +550,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPosts",
 			Handler:    _UserService_ListPosts_Handler,
+		},
+		{
+			MethodName: "ListBookmarks",
+			Handler:    _UserService_ListBookmarks_Handler,
 		},
 		{
 			MethodName: "ListComments",

@@ -22,3 +22,7 @@ dif.md
 *.test
 *.out
 vendor/
+
+# IDE
+.idea/
+.vscode/

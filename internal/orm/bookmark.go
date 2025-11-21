@@ -13,61 +13,56 @@ type Bookmark struct {
 	Post      Post
 	UserID    uuid.UUID
 	User      User
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
-func (c *Bookmark) TableName() string {
+func (b *Bookmark) TableName() string {
 	return "bookmark"
 }
 
-func (c *Bookmark) BeforeCreate(transaction *gorm.DB) error {
-	c.ID = uuid.New()
+func (b *Bookmark) BeforeCreate(transaction *gorm.DB) error {
+	b.ID = uuid.New()
 	return nil
 }
 
-func (c *PostgresClient) SelectBookmarkByID(postID string, userID string) (*Bookmark, error) {
-	var Bookmark Bookmark
+func (c *PostgresClient) InsertBookmark(bookmark *Bookmark) error {
+	return c.database.Create(bookmark).Error
+}
+
+func (c *PostgresClient) DeleteBookmark(bookmark *Bookmark) error {
+	return c.database.Delete(bookmark).Error
+}
+
+func (c *PostgresClient) SelectBookmarkByID(postID, userID string) (*Bookmark, error) {
+	var bookmark Bookmark
 	tx := c.database.
-		Select(
-			[]string{},
-		).
 		Where("post_id = ? AND user_id = ?", postID, userID).
-		First(&Bookmark)
+		First(&bookmark)
 
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 
-	return &Bookmark, nil
+	return &bookmark, nil
 }
 
-func (c *PostgresClient) SelectBookmarksWithPagination(limit int, cursor string) ([]*Bookmark, error) {
+func (c *PostgresClient) SelectBookmarksWithPagination(userID string, limit int, cursor string) ([]*Bookmark, error) {
 	var bookmarks []*Bookmark
 	query := c.database.
-		Select([]string{
-			"post_id",
-			"user_id",
-		}).
 		Preload("Post").
+		Preload("Post.Community").
+		Preload("Post.Author").
+		Where("user_id = ?", userID).
 		Order("created_at DESC")
 
 	if cursor != "" {
 		var cursorBookmark Bookmark
-		tx := c.database.
-			Where("user_id = ?", cursor).
-			First(&cursorBookmark)
-
+		tx := c.database.Where("id = ?", cursor).First(&cursorBookmark)
 		if tx.Error != nil {
 			return nil, tx.Error
 		}
-
-		query = query.Where(
-			"(created_at < ?) OR (created_at = ? AND id < ?)",
-			cursorBookmark.CreatedAt,
-			cursorBookmark.CreatedAt,
-			cursorBookmark.ID,
-		)
+		query = query.Where("created_at < ? OR (created_at = ? AND id < ?)", cursorBookmark.CreatedAt, cursorBookmark.CreatedAt, cursorBookmark.ID)
 	}
 
 	tx := query.Limit(limit).Find(&bookmarks)
@@ -76,14 +71,4 @@ func (c *PostgresClient) SelectBookmarksWithPagination(limit int, cursor string)
 	}
 
 	return bookmarks, nil
-}
-
-func (c *PostgresClient) InsertBookmark(bookmark *Bookmark) error {
-	tx := c.database.Create(bookmark)
-	return tx.Error
-}
-
-func (c *PostgresClient) DeleteBookmark(bookmark *Bookmark) error {
-	tx := c.database.Delete(bookmark)
-	return tx.Error
 }

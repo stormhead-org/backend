@@ -85,6 +85,7 @@ func (x *CreatePostRequest) GetContent() *structpb.Struct {
 
 type CreatePostResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Post          *Post                  `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,6 +118,13 @@ func (x *CreatePostResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreatePostResponse.ProtoReflect.Descriptor instead.
 func (*CreatePostResponse) Descriptor() ([]byte, []int) {
 	return file_post_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CreatePostResponse) GetPost() *Post {
+	if x != nil {
+		return x.Post
+	}
+	return nil
 }
 
 type GetPostRequest struct {
@@ -1047,118 +1055,6 @@ func (x *DeleteBookmarkResponse) GetMessage() string {
 	return ""
 }
 
-type ListBookmarksRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Cursor        string                 `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListBookmarksRequest) Reset() {
-	*x = ListBookmarksRequest{}
-	mi := &file_post_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListBookmarksRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListBookmarksRequest) ProtoMessage() {}
-
-func (x *ListBookmarksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_post_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListBookmarksRequest.ProtoReflect.Descriptor instead.
-func (*ListBookmarksRequest) Descriptor() ([]byte, []int) {
-	return file_post_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *ListBookmarksRequest) GetCursor() string {
-	if x != nil {
-		return x.Cursor
-	}
-	return ""
-}
-
-func (x *ListBookmarksRequest) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-type ListBookmarksResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
-	NextCursor    string                 `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
-	HasMore       bool                   `protobuf:"varint,3,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListBookmarksResponse) Reset() {
-	*x = ListBookmarksResponse{}
-	mi := &file_post_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListBookmarksResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListBookmarksResponse) ProtoMessage() {}
-
-func (x *ListBookmarksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_post_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListBookmarksResponse.ProtoReflect.Descriptor instead.
-func (*ListBookmarksResponse) Descriptor() ([]byte, []int) {
-	return file_post_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *ListBookmarksResponse) GetPosts() []*Post {
-	if x != nil {
-		return x.Posts
-	}
-	return nil
-}
-
-func (x *ListBookmarksResponse) GetNextCursor() string {
-	if x != nil {
-		return x.NextCursor
-	}
-	return ""
-}
-
-func (x *ListBookmarksResponse) GetHasMore() bool {
-	if x != nil {
-		return x.HasMore
-	}
-	return false
-}
-
 var File_post_proto protoreflect.FileDescriptor
 
 const file_post_proto_rawDesc = "" +
@@ -1168,8 +1064,9 @@ const file_post_proto_rawDesc = "" +
 	"\x11CreatePostRequest\x12!\n" +
 	"\fcommunity_id\x18\x01 \x01(\tR\vcommunityId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x121\n" +
-	"\acontent\x18\x03 \x01(\v2\x17.google.protobuf.StructR\acontent\"\x14\n" +
-	"\x12CreatePostResponse\")\n" +
+	"\acontent\x18\x03 \x01(\v2\x17.google.protobuf.StructR\acontent\"5\n" +
+	"\x12CreatePostResponse\x12\x1f\n" +
+	"\x04post\x18\x01 \x01(\v2\v.proto.PostR\x04post\")\n" +
 	"\x0eGetPostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\tR\x06postId\"2\n" +
 	"\x0fGetPostResponse\x12\x1f\n" +
@@ -1216,15 +1113,7 @@ const file_post_proto_rawDesc = "" +
 	"\x15DeleteBookmarkRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\tR\x06postId\"2\n" +
 	"\x16DeleteBookmarkResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"D\n" +
-	"\x14ListBookmarksRequest\x12\x16\n" +
-	"\x06cursor\x18\x01 \x01(\tR\x06cursor\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"v\n" +
-	"\x15ListBookmarksResponse\x12!\n" +
-	"\x05posts\x18\x01 \x03(\v2\v.proto.PostR\x05posts\x12\x1f\n" +
-	"\vnext_cursor\x18\x02 \x01(\tR\n" +
-	"nextCursor\x12\x19\n" +
-	"\bhas_more\x18\x03 \x01(\bR\ahasMore2\xa8\t\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\xc2\b\n" +
 	"\vPostService\x12P\n" +
 	"\x06Create\x12\x18.proto.CreatePostRequest\x1a\x19.proto.CreatePostResponse\"\x11\x82\xd3\xe4\x93\x02\v:\x01*\"\x06/posts\x12N\n" +
 	"\x03Get\x12\x15.proto.GetPostRequest\x1a\x16.proto.GetPostResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/posts/{post_id}\x12Z\n" +
@@ -1236,8 +1125,7 @@ const file_post_proto_rawDesc = "" +
 	"\x04Like\x12\x16.proto.LikePostRequest\x1a\x17.proto.LikePostResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\"\x15/posts/{post_id}/like\x12\\\n" +
 	"\x06Unlike\x12\x18.proto.UnlikePostRequest\x1a\x19.proto.UnlikePostResponse\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/posts/{post_id}/like\x12p\n" +
 	"\x0eCreateBookmark\x12\x1c.proto.CreateBookmarkRequest\x1a\x1d.proto.CreateBookmarkResponse\"!\x82\xd3\xe4\x93\x02\x1b\"\x19/posts/{post_id}/bookmark\x12p\n" +
-	"\x0eDeleteBookmark\x12\x1c.proto.DeleteBookmarkRequest\x1a\x1d.proto.DeleteBookmarkResponse\"!\x82\xd3\xe4\x93\x02\x1b*\x19/posts/{post_id}/bookmark\x12d\n" +
-	"\rListBookmarks\x12\x1b.proto.ListBookmarksRequest\x1a\x1c.proto.ListBookmarksResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/posts/bookmarksB\bZ\x06/protob\x06proto3"
+	"\x0eDeleteBookmark\x12\x1c.proto.DeleteBookmarkRequest\x1a\x1d.proto.DeleteBookmarkResponse\"!\x82\xd3\xe4\x93\x02\x1b*\x19/posts/{post_id}/bookmarkB\bZ\x06/protob\x06proto3"
 
 var (
 	file_post_proto_rawDescOnce sync.Once
@@ -1251,7 +1139,7 @@ func file_post_proto_rawDescGZIP() []byte {
 	return file_post_proto_rawDescData
 }
 
-var file_post_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_post_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_post_proto_goTypes = []any{
 	(*CreatePostRequest)(nil),        // 0: proto.CreatePostRequest
 	(*CreatePostResponse)(nil),       // 1: proto.CreatePostResponse
@@ -1275,20 +1163,18 @@ var file_post_proto_goTypes = []any{
 	(*CreateBookmarkResponse)(nil),   // 19: proto.CreateBookmarkResponse
 	(*DeleteBookmarkRequest)(nil),    // 20: proto.DeleteBookmarkRequest
 	(*DeleteBookmarkResponse)(nil),   // 21: proto.DeleteBookmarkResponse
-	(*ListBookmarksRequest)(nil),     // 22: proto.ListBookmarksRequest
-	(*ListBookmarksResponse)(nil),    // 23: proto.ListBookmarksResponse
-	(*structpb.Struct)(nil),          // 24: google.protobuf.Struct
-	(*Post)(nil),                     // 25: proto.Post
-	(*Comment)(nil),                  // 26: proto.Comment
+	(*structpb.Struct)(nil),          // 22: google.protobuf.Struct
+	(*Post)(nil),                     // 23: proto.Post
+	(*Comment)(nil),                  // 24: proto.Comment
 }
 var file_post_proto_depIdxs = []int32{
-	24, // 0: proto.CreatePostRequest.content:type_name -> google.protobuf.Struct
-	25, // 1: proto.GetPostResponse.post:type_name -> proto.Post
-	24, // 2: proto.UpdatePostRequest.content:type_name -> google.protobuf.Struct
-	26, // 3: proto.ListPostCommentsResponse.comments:type_name -> proto.Comment
-	25, // 4: proto.PublishPostResponse.post:type_name -> proto.Post
-	25, // 5: proto.UnpublishPostResponse.post:type_name -> proto.Post
-	25, // 6: proto.ListBookmarksResponse.posts:type_name -> proto.Post
+	22, // 0: proto.CreatePostRequest.content:type_name -> google.protobuf.Struct
+	23, // 1: proto.CreatePostResponse.post:type_name -> proto.Post
+	23, // 2: proto.GetPostResponse.post:type_name -> proto.Post
+	22, // 3: proto.UpdatePostRequest.content:type_name -> google.protobuf.Struct
+	24, // 4: proto.ListPostCommentsResponse.comments:type_name -> proto.Comment
+	23, // 5: proto.PublishPostResponse.post:type_name -> proto.Post
+	23, // 6: proto.UnpublishPostResponse.post:type_name -> proto.Post
 	0,  // 7: proto.PostService.Create:input_type -> proto.CreatePostRequest
 	2,  // 8: proto.PostService.Get:input_type -> proto.GetPostRequest
 	4,  // 9: proto.PostService.Update:input_type -> proto.UpdatePostRequest
@@ -1300,21 +1186,19 @@ var file_post_proto_depIdxs = []int32{
 	16, // 15: proto.PostService.Unlike:input_type -> proto.UnlikePostRequest
 	18, // 16: proto.PostService.CreateBookmark:input_type -> proto.CreateBookmarkRequest
 	20, // 17: proto.PostService.DeleteBookmark:input_type -> proto.DeleteBookmarkRequest
-	22, // 18: proto.PostService.ListBookmarks:input_type -> proto.ListBookmarksRequest
-	1,  // 19: proto.PostService.Create:output_type -> proto.CreatePostResponse
-	3,  // 20: proto.PostService.Get:output_type -> proto.GetPostResponse
-	5,  // 21: proto.PostService.Update:output_type -> proto.UpdatePostResponse
-	7,  // 22: proto.PostService.Delete:output_type -> proto.DeletePostResponse
-	9,  // 23: proto.PostService.ListComments:output_type -> proto.ListPostCommentsResponse
-	11, // 24: proto.PostService.Publish:output_type -> proto.PublishPostResponse
-	13, // 25: proto.PostService.Unpublish:output_type -> proto.UnpublishPostResponse
-	15, // 26: proto.PostService.Like:output_type -> proto.LikePostResponse
-	17, // 27: proto.PostService.Unlike:output_type -> proto.UnlikePostResponse
-	19, // 28: proto.PostService.CreateBookmark:output_type -> proto.CreateBookmarkResponse
-	21, // 29: proto.PostService.DeleteBookmark:output_type -> proto.DeleteBookmarkResponse
-	23, // 30: proto.PostService.ListBookmarks:output_type -> proto.ListBookmarksResponse
-	19, // [19:31] is the sub-list for method output_type
-	7,  // [7:19] is the sub-list for method input_type
+	1,  // 18: proto.PostService.Create:output_type -> proto.CreatePostResponse
+	3,  // 19: proto.PostService.Get:output_type -> proto.GetPostResponse
+	5,  // 20: proto.PostService.Update:output_type -> proto.UpdatePostResponse
+	7,  // 21: proto.PostService.Delete:output_type -> proto.DeletePostResponse
+	9,  // 22: proto.PostService.ListComments:output_type -> proto.ListPostCommentsResponse
+	11, // 23: proto.PostService.Publish:output_type -> proto.PublishPostResponse
+	13, // 24: proto.PostService.Unpublish:output_type -> proto.UnpublishPostResponse
+	15, // 25: proto.PostService.Like:output_type -> proto.LikePostResponse
+	17, // 26: proto.PostService.Unlike:output_type -> proto.UnlikePostResponse
+	19, // 27: proto.PostService.CreateBookmark:output_type -> proto.CreateBookmarkResponse
+	21, // 28: proto.PostService.DeleteBookmark:output_type -> proto.DeleteBookmarkResponse
+	18, // [18:29] is the sub-list for method output_type
+	7,  // [7:18] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -1332,7 +1216,7 @@ func file_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_post_proto_rawDesc), len(file_post_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

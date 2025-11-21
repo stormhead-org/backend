@@ -139,6 +139,8 @@ type Community struct {
 	IsBanned      bool                   `protobuf:"varint,11,opt,name=is_banned,json=isBanned,proto3" json:"is_banned,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	IsArchived    bool                   `protobuf:"varint,14,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
+	ArchivedAt    *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -260,6 +262,20 @@ func (x *Community) GetCreatedAt() *timestamppb.Timestamp {
 func (x *Community) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *Community) GetIsArchived() bool {
+	if x != nil {
+		return x.IsArchived
+	}
+	return false
+}
+
+func (x *Community) GetArchivedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ArchivedAt
 	}
 	return nil
 }
@@ -1048,7 +1064,7 @@ var File_entity_proto protoreflect.FileDescriptor
 
 const file_entity_proto_rawDesc = "" +
 	"\n" +
-	"\fentity.proto\x12\x05proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xaa\x03\n" +
+	"\fentity.proto\x12\x05proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x88\x04\n" +
 	"\tCommunity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12\x1d\n" +
@@ -1069,7 +1085,11 @@ const file_entity_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xdf\x04\n" +
+	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1f\n" +
+	"\vis_archived\x18\x0e \x01(\bR\n" +
+	"isArchived\x12;\n" +
+	"\varchived_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"archivedAt\"\xdf\x04\n" +
 	"\x04Post\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fcommunity_id\x18\x02 \x01(\tR\vcommunityId\x12%\n" +
@@ -1212,24 +1232,25 @@ var file_entity_proto_goTypes = []any{
 var file_entity_proto_depIdxs = []int32{
 	10, // 0: proto.Community.created_at:type_name -> google.protobuf.Timestamp
 	10, // 1: proto.Community.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 2: proto.Post.content:type_name -> google.protobuf.Struct
-	0,  // 3: proto.Post.status:type_name -> proto.PostStatus
-	10, // 4: proto.Post.created_at:type_name -> google.protobuf.Timestamp
-	10, // 5: proto.Post.updated_at:type_name -> google.protobuf.Timestamp
-	10, // 6: proto.Post.published_at:type_name -> google.protobuf.Timestamp
-	4,  // 7: proto.Comment.attachments:type_name -> proto.MediaAttachment
-	10, // 8: proto.Comment.created_at:type_name -> google.protobuf.Timestamp
-	10, // 9: proto.Comment.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 10: proto.CommentEvent.event_type:type_name -> proto.CommentEventType
-	5,  // 11: proto.CommentEvent.comment:type_name -> proto.Comment
-	10, // 12: proto.CommentEvent.timestamp:type_name -> google.protobuf.Timestamp
-	10, // 13: proto.UserProfile.created_at:type_name -> google.protobuf.Timestamp
-	10, // 14: proto.CurrentUserProfile.created_at:type_name -> google.protobuf.Timestamp
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	10, // 2: proto.Community.archived_at:type_name -> google.protobuf.Timestamp
+	11, // 3: proto.Post.content:type_name -> google.protobuf.Struct
+	0,  // 4: proto.Post.status:type_name -> proto.PostStatus
+	10, // 5: proto.Post.created_at:type_name -> google.protobuf.Timestamp
+	10, // 6: proto.Post.updated_at:type_name -> google.protobuf.Timestamp
+	10, // 7: proto.Post.published_at:type_name -> google.protobuf.Timestamp
+	4,  // 8: proto.Comment.attachments:type_name -> proto.MediaAttachment
+	10, // 9: proto.Comment.created_at:type_name -> google.protobuf.Timestamp
+	10, // 10: proto.Comment.updated_at:type_name -> google.protobuf.Timestamp
+	1,  // 11: proto.CommentEvent.event_type:type_name -> proto.CommentEventType
+	5,  // 12: proto.CommentEvent.comment:type_name -> proto.Comment
+	10, // 13: proto.CommentEvent.timestamp:type_name -> google.protobuf.Timestamp
+	10, // 14: proto.UserProfile.created_at:type_name -> google.protobuf.Timestamp
+	10, // 15: proto.CurrentUserProfile.created_at:type_name -> google.protobuf.Timestamp
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_entity_proto_init() }

@@ -28,7 +28,7 @@ func (s *CommunityServer) Get(ctx context.Context, req *protopkg.GetCommunityReq
 		s.log.Error("failed to calculate community reputation", zap.Error(err), zap.String("community_id", req.CommunityId))
 		// Do not fail the request if reputation calculation fails, just log it.
 	}
-	community.Reputation = int(reputation)
+	community.Reputation = int64(reputation) // Changed here
 
 	return &protopkg.GetCommunityResponse{
 		Community: &protopkg.Community{

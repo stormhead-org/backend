@@ -17,7 +17,9 @@ message CreatePostRequest {
   google.protobuf.Struct content     = 3;  // JSON structured content
 }
 
-message CreatePostResponse {}
+message CreatePostResponse {
+  Post post = 1;
+}
 
 // ============================================================================
 // Get (FR-208, FR-213)
@@ -144,21 +146,6 @@ message DeleteBookmarkResponse {
 }
 
 // ============================================================================
-// ListBookmarks (FR-167, FR-168, FR-170)
-// ============================================================================
-
-message ListBookmarksRequest {
-  string cursor = 1;
-  int32 limit   = 2;
-}
-
-message ListBookmarksResponse {
-  repeated Post posts = 1;
-  string next_cursor  = 2;
-  bool has_more       = 3;
-}
-
-// ============================================================================
 // Service Definition
 // ============================================================================
 
@@ -233,12 +220,6 @@ service PostService {
   rpc DeleteBookmark(DeleteBookmarkRequest) returns (DeleteBookmarkResponse) {
     option (google.api.http) = {
       delete: "/posts/{post_id}/bookmark"
-    };
-  }
-
-  rpc ListBookmarks(ListBookmarksRequest) returns (ListBookmarksResponse) {
-    option (google.api.http) = {
-      get: "/posts/bookmarks"
     };
   }
 }

@@ -13,8 +13,11 @@ import (
 	eventpkg "github.com/stormhead-org/backend/internal/event"
 	grpcpkg "github.com/stormhead-org/backend/internal/grpc"
 	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
+	commentgrpcpkg "github.com/stormhead-org/backend/internal/grpc/comment"
 	communitygrpcpkg "github.com/stormhead-org/backend/internal/grpc/community"
 	postgrpcpkg "github.com/stormhead-org/backend/internal/grpc/post"
+	searchgrpcpkg "github.com/stormhead-org/backend/internal/grpc/search"
+	usergrpcpkg "github.com/stormhead-org/backend/internal/grpc/user"
 	jwtpkg "github.com/stormhead-org/backend/internal/jwt"
 	ormpkg "github.com/stormhead-org/backend/internal/orm"
 )
@@ -77,10 +80,11 @@ func serverCommandImpl() error {
 
 			// gRPC Servers
 			authorizationgrpcpkg.NewAuthorizationServer,
+			commentgrpcpkg.NewCommentServer,
 			communitygrpcpkg.NewCommunityServer,
 			postgrpcpkg.NewPostServer,
-			grpcpkg.NewCommentServer,
-			grpcpkg.NewUserServer,
+			usergrpcpkg.NewUserServer,
+			searchgrpcpkg.NewSearchServer,
 
 			// Main gRPC Server
 			func(
@@ -89,10 +93,11 @@ func serverCommandImpl() error {
 				jwt *jwtpkg.JWT,
 				db *ormpkg.PostgresClient,
 				authServer *authorizationgrpcpkg.AuthorizationServer,
+				commentServer *commentgrpcpkg.CommentServer,
 				communityServer *communitygrpcpkg.CommunityServer,
 				postServer *postgrpcpkg.PostServer,
-				commentServer *grpcpkg.CommentServer,
-				userServer *grpcpkg.UserServer,
+				searchServer *searchgrpcpkg.SearchServer,
+				userServer *usergrpcpkg.UserServer,
 			) (*grpcpkg.GRPC, error) {
 				grpcServer, err := grpcpkg.NewGRPC(
 					log,
@@ -101,9 +106,10 @@ func serverCommandImpl() error {
 					os.Getenv("GRPC_HOST"),
 					os.Getenv("GRPC_PORT"),
 					authServer,
+					commentServer,
 					communityServer,
 					postServer,
-					commentServer,
+					searchServer,
 					userServer,
 				)
 				if err != nil {
@@ -135,3 +141,4 @@ func serverCommandImpl() error {
 func init() {
 	rootCommand.AddCommand(serverCommand)
 }
+

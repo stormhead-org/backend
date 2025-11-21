@@ -19,5 +19,3 @@ func NewCommunityServer(log *zap.Logger, db *orm.PostgresClient) *CommunityServe
 		db:  db,
 	}
 }
-
-// ... Other methods (Ban, Unban, TransferOwnership) would follow the same pattern

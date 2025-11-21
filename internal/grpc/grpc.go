@@ -16,8 +16,11 @@ import (
 	"github.com/stormhead-org/backend/internal/proto"
 
 	authorizationgrpcpkg "github.com/stormhead-org/backend/internal/grpc/authorization"
+	commentgrpcpkg "github.com/stormhead-org/backend/internal/grpc/comment"
 	communitygrpcpkg "github.com/stormhead-org/backend/internal/grpc/community"
 	postgrpcpkg "github.com/stormhead-org/backend/internal/grpc/post"
+	searchgrpcpkg "github.com/stormhead-org/backend/internal/grpc/search"
+	usergrpcpkg "github.com/stormhead-org/backend/internal/grpc/user"
 )
 
 type GRPC struct {
@@ -34,10 +37,11 @@ func NewGRPC(
 	host string,
 	port string,
 	authServer *authorizationgrpcpkg.AuthorizationServer,
+	commentServer *commentgrpcpkg.CommentServer,
 	communityServer *communitygrpcpkg.CommunityServer,
 	postServer *postgrpcpkg.PostServer,
-	commentServer *CommentServer,
-	userServer *UserServer,
+	searchServer *searchgrpcpkg.SearchServer,
+	userServer *usergrpcpkg.UserServer,
 ) (*GRPC, error) {
 	rateLimitMiddleware := middleware.NewRateLimitMiddleware(5, 600)
 	authMiddleware := middleware.NewAuthorizationMiddleware(logger, jwt, db)
@@ -51,14 +55,11 @@ func NewGRPC(
 
 	// Register services
 	proto.RegisterAuthorizationServiceServer(grpcServer, authServer)
+	proto.RegisterCommentServiceServer(grpcServer, commentServer)
 	proto.RegisterCommunityServiceServer(grpcServer, communityServer)
 	proto.RegisterPostServiceServer(grpcServer, postServer)
-	proto.RegisterCommentServiceServer(grpcServer, commentServer)
+	proto.RegisterSearchServiceServer(grpcServer, searchServer)
 	proto.RegisterUserServiceServer(grpcServer, userServer)
-
-	// Search API
-	// searchServer := NewSearchServer(logger, database, broker)
-	// protopkg.RegisterSearchServiceServer(grpcServer, searchServer)
 
 	// Health API
 	healthServer := health.NewServer()

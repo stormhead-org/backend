@@ -5,6 +5,7 @@
 # Docker
 Dockerfile
 .dockerignore
+coverage/
 
 # Node
 node_modules

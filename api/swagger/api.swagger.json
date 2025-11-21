@@ -1136,6 +1136,23 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "NEWEST",
+              "POPULARITY"
+            ],
+            "default": "NEWEST"
+          },
+          {
+            "name": "includeBanned",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1235,34 +1252,6 @@
           "CommunityService"
         ]
       },
-      "delete": {
-        "operationId": "CommunityService_Delete",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/protoDeleteCommunityResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "communityId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "CommunityService"
-        ]
-      },
       "patch": {
         "operationId": "CommunityService_Update",
         "responses": {
@@ -1292,6 +1281,44 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/protoCommunityServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "CommunityService"
+        ]
+      }
+    },
+    "/communities/{communityId}/archive": {
+      "post": {
+        "operationId": "CommunityService_Archive",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protoArchiveCommunityResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "communityId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CommunityServiceArchiveBody"
             }
           }
         ],
@@ -2458,43 +2485,6 @@
         ]
       }
     },
-    "/posts/bookmarks": {
-      "get": {
-        "operationId": "PostService_ListBookmarks",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/protoListBookmarksResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "cursor",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PostService"
-        ]
-      }
-    },
     "/posts/{postId}": {
       "get": {
         "operationId": "PostService_Get",
@@ -3313,6 +3303,43 @@
         ]
       }
     },
+    "/users/bookmarks": {
+      "get": {
+        "operationId": "UserService_ListBookmarks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protoListBookmarksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
     "/users/heartbeat": {
       "post": {
         "summary": "Online Status",
@@ -3544,6 +3571,23 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "NEWEST",
+              "POPULARITY"
+            ],
+            "default": "NEWEST"
+          },
+          {
+            "name": "includeBanned",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -3901,6 +3945,14 @@
         }
       }
     },
+    "CommunityServiceArchiveBody": {
+      "type": "object",
+      "properties": {
+        "confirm": {
+          "type": "boolean"
+        }
+      }
+    },
     "CommunityServiceBanBody": {
       "type": "object",
       "properties": {
@@ -4004,6 +4056,9 @@
           "$ref": "#/definitions/protoBadge"
         }
       }
+    },
+    "protoArchiveCommunityResponse": {
+      "type": "object"
     },
     "protoAssignRoleResponse": {
       "type": "object",
@@ -4331,6 +4386,13 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "isArchived": {
+          "type": "boolean"
+        },
+        "archivedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -4585,7 +4647,12 @@
       }
     },
     "protoCreatePostResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "post": {
+          "$ref": "#/definitions/protoPost"
+        }
+      }
     },
     "protoCreateRequest": {
       "type": "object",
@@ -4680,9 +4747,6 @@
       }
     },
     "protoDeleteCommentResponse": {
-      "type": "object"
-    },
-    "protoDeleteCommunityResponse": {
       "type": "object"
     },
     "protoDeletePostResponse": {
@@ -4968,6 +5032,14 @@
         }
       }
     },
+    "protoListCommunitiesRequestSortOrder": {
+      "type": "string",
+      "enum": [
+        "NEWEST",
+        "POPULARITY"
+      ],
+      "default": "NEWEST"
+    },
     "protoListCommunitiesResponse": {
       "type": "object",
       "properties": {
@@ -5183,6 +5255,14 @@
           "type": "boolean"
         }
       }
+    },
+    "protoListUserCommunitiesRequestSortOrder": {
+      "type": "string",
+      "enum": [
+        "NEWEST",
+        "POPULARITY"
+      ],
+      "default": "NEWEST"
     },
     "protoListUserCommunitiesResponse": {
       "type": "object",
@@ -6117,6 +6197,9 @@
     "protoSearchResult": {
       "type": "object",
       "properties": {
+        "contentType": {
+          "$ref": "#/definitions/protoContentType"
+        },
         "community": {
           "$ref": "#/definitions/protoCommunity"
         },

@@ -17,9 +17,11 @@ type Community struct {
 	Rules       string
 	IsBanned    bool
 	BanReason   string
-	MemberCount int       `gorm:"default:0"`
-	PostCount   int       `gorm:"default:0"`
-	Reputation  int       `gorm:"default:0"`
+	IsArchived  bool       `gorm:"default:false"`
+	ArchivedAt  *time.Time `gorm:"default:null"`
+	MemberCount int        `gorm:"default:0"`
+	PostCount   int        `gorm:"default:0"`
+	Reputation  int64      `gorm:"default:0"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -40,22 +42,25 @@ func (c *Community) BeforeCreate(transaction *gorm.DB) error {
 func (c *PostgresClient) SelectCommunityByID(id string) (*Community, error) {
 	var community Community
 	tx := c.database.
+		Preload("Owner").
 		Select([]string{
-			"id",
-			"owner_id",
-			"slug",
-			"name",
-			"description",
-			"rules",
-			"is_banned",
-			"ban_reason",
-			"member_count",
-			"post_count",
-			"reputation",
-			"created_at",
-			"updated_at",
+			"community.id",
+			"community.owner_id",
+			"community.slug",
+			"community.name",
+			"community.description",
+			"community.rules",
+			"community.is_banned",
+			"community.ban_reason",
+			"community.is_archived",
+			"community.archived_at",
+			"community.member_count",
+			"community.post_count",
+			"community.reputation",
+			"community.created_at",
+			"community.updated_at",
 		}).
-		Where("id = ?", id).
+		Where("community.id = ?", id).
 		First(&community)
 
 	if tx.Error != nil {
@@ -68,22 +73,25 @@ func (c *PostgresClient) SelectCommunityByID(id string) (*Community, error) {
 func (c *PostgresClient) SelectCommunityBySlug(slug string) (*Community, error) {
 	var community Community
 	tx := c.database.
+		Preload("Owner").
 		Select([]string{
-			"id",
-			"owner_id",
-			"slug",
-			"name",
-			"description",
-			"rules",
-			"is_banned",
-			"ban_reason",
-			"member_count",
-			"post_count",
-			"reputation",
-			"created_at",
-			"updated_at",
+			"community.id",
+			"community.owner_id",
+			"community.slug",
+			"community.name",
+			"community.description",
+			"community.rules",
+			"community.is_banned",
+			"community.ban_reason",
+			"community.is_archived",
+			"community.archived_at",
+			"community.member_count",
+			"community.post_count",
+			"community.reputation",
+			"community.created_at",
+			"community.updated_at",
 		}).
-		Where("slug = ?", slug).
+		Where("community.slug = ?", slug).
 		First(&community)
 
 	if tx.Error != nil {
@@ -96,22 +104,25 @@ func (c *PostgresClient) SelectCommunityBySlug(slug string) (*Community, error) 
 func (c *PostgresClient) SelectCommunityByName(name string) (*Community, error) {
 	var community Community
 	tx := c.database.
+		Preload("Owner").
 		Select([]string{
-			"id",
-			"owner_id",
-			"slug",
-			"name",
-			"description",
-			"rules",
-			"is_banned",
-			"ban_reason",
-			"member_count",
-			"post_count",
-			"reputation",
-			"created_at",
-			"updated_at",
+			"community.id",
+			"community.owner_id",
+			"community.slug",
+			"community.name",
+			"community.description",
+			"community.rules",
+			"community.is_banned",
+			"community.ban_reason",
+			"community.is_archived",
+			"community.archived_at",
+			"community.member_count",
+			"community.post_count",
+			"community.reputation",
+			"community.created_at",
+			"community.updated_at",
 		}).
-		Where("name = ?", name).
+		Where("community.name = ?", name).
 		First(&community)
 
 	if tx.Error != nil {
@@ -121,29 +132,45 @@ func (c *PostgresClient) SelectCommunityByName(name string) (*Community, error) 
 	return &community, nil
 }
 
-func (c *PostgresClient) SelectCommunitiesWithPagination(owner_id string, limit int, cursor string) ([]*Community, error) {
+func (c *PostgresClient) SelectCommunitiesWithPagination(ownerID string, limit int, cursor string, sortBy string, includeBanned bool, includeArchived bool) ([]*Community, error) {
 	var communities []*Community
 	query := c.database.
+		Preload("Owner").
 		Select([]string{
-			"id",
-			"owner_id",
-			"slug",
-			"name",
-			"description",
-			"rules",
-			"is_banned",
-			"ban_reason",
-			"member_count",
-			"post_count",
-			"reputation",
-			"created_at",
-			"updated_at",
-		}).
-		Order("created_at DESC")
+			"community.id",
+			"community.owner_id",
+			"community.slug",
+			"community.name",
+			"community.description",
+			"community.rules",
+			"community.is_banned",
+			"community.ban_reason",
+			"community.is_archived",
+			"community.archived_at",
+			"community.member_count",
+			"community.post_count",
+			"community.reputation",
+			"community.created_at",
+			"community.updated_at",
+		})
 
-	if owner_id != "" {
-		query = query.Where("owner_id = ?", owner_id)
+	if ownerID != "" {
+		query = query.Where("community.owner_id = ?", ownerID)
 	}
+
+	if !includeBanned {
+		query = query.Where("community.is_banned = ?", false)
+	}
+
+	if !includeArchived {
+		query = query.Where("community.is_archived = ?", false)
+	}
+
+	orderClause := "community.created_at DESC"
+	if sortBy == "popularity" {
+		orderClause = "community.member_count DESC, community.created_at DESC"
+	}
+	query = query.Order(orderClause)
 
 	if cursor != "" {
 		var cursorCommunity Community
@@ -155,12 +182,25 @@ func (c *PostgresClient) SelectCommunitiesWithPagination(owner_id string, limit 
 			return nil, tx.Error
 		}
 
-		query = query.Where(
-			"(created_at < ?) OR (created_at = ? AND id < ?)",
-			cursorCommunity.CreatedAt,
-			cursorCommunity.CreatedAt,
-			cursorCommunity.ID,
-		)
+		// Handle cursor for different sort orders
+		if sortBy == "popularity" {
+			query = query.Where(
+				"(community.member_count < ?) OR (community.member_count = ? AND community.created_at < ?) OR (community.member_count = ? AND community.created_at = ? AND community.id < ?)",
+				cursorCommunity.MemberCount,
+				cursorCommunity.MemberCount,
+				cursorCommunity.CreatedAt,
+				cursorCommunity.MemberCount,
+				cursorCommunity.CreatedAt,
+				cursorCommunity.ID,
+			)
+		} else { // default to created_at
+			query = query.Where(
+				"(community.created_at < ?) OR (community.created_at = ? AND community.id < ?)",
+				cursorCommunity.CreatedAt,
+				cursorCommunity.CreatedAt,
+				cursorCommunity.ID,
+			)
+		}
 	}
 
 	tx := query.Limit(limit).Find(&communities)

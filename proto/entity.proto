@@ -19,6 +19,8 @@ message Community {
   bool is_banned                       = 11;
   google.protobuf.Timestamp created_at = 12;
   google.protobuf.Timestamp updated_at = 13;
+  bool is_archived                     = 14;
+  google.protobuf.Timestamp archived_at = 15;
 }
 
 enum PostStatus {

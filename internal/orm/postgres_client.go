@@ -52,6 +52,17 @@ func (c *PostgresClient) CountUsers() (int64, error) {
 	return count, nil
 }
 
+func (c *PostgresClient) IsCommunityMember(communityID, userID string) (bool, error) {
+	var count int64
+	err := c.database.Model(&CommunityUser{}).
+		Where("community_id = ? AND user_id = ?", communityID, userID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (c *PostgresClient) SelectRoleByName(name string, communityID *uuid.UUID) (*Role, error) {
 	var role Role
 	query := c.database.Where("name = ?", name)

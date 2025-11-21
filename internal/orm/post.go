@@ -2,6 +2,7 @@ package orm
 
 import (
 	"encoding/json"
+	"errors" // Added import
 	"time"
 
 	"github.com/google/uuid"
@@ -35,8 +36,33 @@ func (c *Post) TableName() string {
 	return "post"
 }
 
-func (c *Post) BeforeCreate(transaction *gorm.DB) error {
-	c.ID = uuid.New()
+func (p *Post) ValidateContent() error {
+	if len(p.Content) > 0 {
+		// Check for valid JSON
+		if !json.Valid(p.Content) {
+			return gorm.ErrInvalidData
+		}
+
+		// Check for size limit (1MB)
+		if len(p.Content) > 1024*1024 { // 1MB
+			return errors.New("post content exceeds 1MB limit")
+		}
+	}
+	return nil
+}
+
+func (p *Post) BeforeCreate(transaction *gorm.DB) error {
+	p.ID = uuid.New()
+	if err := p.ValidateContent(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Post) BeforeUpdate(transaction *gorm.DB) error {
+	if err := p.ValidateContent(); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -23,7 +23,7 @@ const (
 	CommunityService_Create_FullMethodName                = "/proto.CommunityService/Create"
 	CommunityService_Get_FullMethodName                   = "/proto.CommunityService/Get"
 	CommunityService_Update_FullMethodName                = "/proto.CommunityService/Update"
-	CommunityService_Delete_FullMethodName                = "/proto.CommunityService/Delete"
+	CommunityService_Archive_FullMethodName               = "/proto.CommunityService/Archive"
 	CommunityService_ListCommunities_FullMethodName       = "/proto.CommunityService/ListCommunities"
 	CommunityService_Join_FullMethodName                  = "/proto.CommunityService/Join"
 	CommunityService_Leave_FullMethodName                 = "/proto.CommunityService/Leave"
@@ -41,7 +41,7 @@ type CommunityServiceClient interface {
 	Create(ctx context.Context, in *CreateCommunityRequest, opts ...grpc.CallOption) (*CreateCommunityResponse, error)
 	Get(ctx context.Context, in *GetCommunityRequest, opts ...grpc.CallOption) (*GetCommunityResponse, error)
 	Update(ctx context.Context, in *UpdateCommunityRequest, opts ...grpc.CallOption) (*UpdateCommunityResponse, error)
-	Delete(ctx context.Context, in *DeleteCommunityRequest, opts ...grpc.CallOption) (*DeleteCommunityResponse, error)
+	Archive(ctx context.Context, in *ArchiveCommunityRequest, opts ...grpc.CallOption) (*ArchiveCommunityResponse, error)
 	// List Operations
 	ListCommunities(ctx context.Context, in *ListCommunitiesRequest, opts ...grpc.CallOption) (*ListCommunitiesResponse, error)
 	// Membership Operations
@@ -102,10 +102,10 @@ func (c *communityServiceClient) Update(ctx context.Context, in *UpdateCommunity
 	return out, nil
 }
 
-func (c *communityServiceClient) Delete(ctx context.Context, in *DeleteCommunityRequest, opts ...grpc.CallOption) (*DeleteCommunityResponse, error) {
+func (c *communityServiceClient) Archive(ctx context.Context, in *ArchiveCommunityRequest, opts ...grpc.CallOption) (*ArchiveCommunityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteCommunityResponse)
-	err := c.cc.Invoke(ctx, CommunityService_Delete_FullMethodName, in, out, cOpts...)
+	out := new(ArchiveCommunityResponse)
+	err := c.cc.Invoke(ctx, CommunityService_Archive_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ type CommunityServiceServer interface {
 	Create(context.Context, *CreateCommunityRequest) (*CreateCommunityResponse, error)
 	Get(context.Context, *GetCommunityRequest) (*GetCommunityResponse, error)
 	Update(context.Context, *UpdateCommunityRequest) (*UpdateCommunityResponse, error)
-	Delete(context.Context, *DeleteCommunityRequest) (*DeleteCommunityResponse, error)
+	Archive(context.Context, *ArchiveCommunityRequest) (*ArchiveCommunityResponse, error)
 	// List Operations
 	ListCommunities(context.Context, *ListCommunitiesRequest) (*ListCommunitiesResponse, error)
 	// Membership Operations
@@ -214,8 +214,8 @@ func (UnimplementedCommunityServiceServer) Get(context.Context, *GetCommunityReq
 func (UnimplementedCommunityServiceServer) Update(context.Context, *UpdateCommunityRequest) (*UpdateCommunityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedCommunityServiceServer) Delete(context.Context, *DeleteCommunityRequest) (*DeleteCommunityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+func (UnimplementedCommunityServiceServer) Archive(context.Context, *ArchiveCommunityRequest) (*ArchiveCommunityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Archive not implemented")
 }
 func (UnimplementedCommunityServiceServer) ListCommunities(context.Context, *ListCommunitiesRequest) (*ListCommunitiesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCommunities not implemented")
@@ -328,20 +328,20 @@ func _CommunityService_Update_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CommunityService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteCommunityRequest)
+func _CommunityService_Archive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveCommunityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CommunityServiceServer).Delete(ctx, in)
+		return srv.(CommunityServiceServer).Archive(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CommunityService_Delete_FullMethodName,
+		FullMethod: CommunityService_Archive_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommunityServiceServer).Delete(ctx, req.(*DeleteCommunityRequest))
+		return srv.(CommunityServiceServer).Archive(ctx, req.(*ArchiveCommunityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -478,8 +478,8 @@ var CommunityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CommunityService_Update_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _CommunityService_Delete_Handler,
+			MethodName: "Archive",
+			Handler:    _CommunityService_Archive_Handler,
 		},
 		{
 			MethodName: "ListCommunities",

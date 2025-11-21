@@ -30,7 +30,6 @@ const (
 	PostService_Unlike_FullMethodName         = "/proto.PostService/Unlike"
 	PostService_CreateBookmark_FullMethodName = "/proto.PostService/CreateBookmark"
 	PostService_DeleteBookmark_FullMethodName = "/proto.PostService/DeleteBookmark"
-	PostService_ListBookmarks_FullMethodName  = "/proto.PostService/ListBookmarks"
 )
 
 // PostServiceClient is the client API for PostService service.
@@ -53,7 +52,6 @@ type PostServiceClient interface {
 	// Bookmark Operations
 	CreateBookmark(ctx context.Context, in *CreateBookmarkRequest, opts ...grpc.CallOption) (*CreateBookmarkResponse, error)
 	DeleteBookmark(ctx context.Context, in *DeleteBookmarkRequest, opts ...grpc.CallOption) (*DeleteBookmarkResponse, error)
-	ListBookmarks(ctx context.Context, in *ListBookmarksRequest, opts ...grpc.CallOption) (*ListBookmarksResponse, error)
 }
 
 type postServiceClient struct {
@@ -174,16 +172,6 @@ func (c *postServiceClient) DeleteBookmark(ctx context.Context, in *DeleteBookma
 	return out, nil
 }
 
-func (c *postServiceClient) ListBookmarks(ctx context.Context, in *ListBookmarksRequest, opts ...grpc.CallOption) (*ListBookmarksResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListBookmarksResponse)
-	err := c.cc.Invoke(ctx, PostService_ListBookmarks_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility.
@@ -204,7 +192,6 @@ type PostServiceServer interface {
 	// Bookmark Operations
 	CreateBookmark(context.Context, *CreateBookmarkRequest) (*CreateBookmarkResponse, error)
 	DeleteBookmark(context.Context, *DeleteBookmarkRequest) (*DeleteBookmarkResponse, error)
-	ListBookmarks(context.Context, *ListBookmarksRequest) (*ListBookmarksResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -247,9 +234,6 @@ func (UnimplementedPostServiceServer) CreateBookmark(context.Context, *CreateBoo
 }
 func (UnimplementedPostServiceServer) DeleteBookmark(context.Context, *DeleteBookmarkRequest) (*DeleteBookmarkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteBookmark not implemented")
-}
-func (UnimplementedPostServiceServer) ListBookmarks(context.Context, *ListBookmarksRequest) (*ListBookmarksResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBookmarks not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 func (UnimplementedPostServiceServer) testEmbeddedByValue()                     {}
@@ -470,24 +454,6 @@ func _PostService_DeleteBookmark_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PostService_ListBookmarks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListBookmarksRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).ListBookmarks(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_ListBookmarks_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).ListBookmarks(ctx, req.(*ListBookmarksRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -538,10 +504,6 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteBookmark",
 			Handler:    _PostService_DeleteBookmark_Handler,
-		},
-		{
-			MethodName: "ListBookmarks",
-			Handler:    _PostService_ListBookmarks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

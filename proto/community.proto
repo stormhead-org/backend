@@ -59,22 +59,29 @@ message UpdateCommunityResponse {
 }
 
 // ============================================================================
-// Delete (FR-225, FR-236, FR-237)
+// Archive (FR-225, FR-236, FR-237)
 // ============================================================================
 
-message DeleteCommunityRequest {
+message ArchiveCommunityRequest {
   string community_id = 1;
+  bool confirm        = 2;
 }
 
-message DeleteCommunityResponse {}
+message ArchiveCommunityResponse {}
 
 // ============================================================================
 // ListCommunities (FR-226, FR-231)
 // ============================================================================
 
 message ListCommunitiesRequest {
-  string cursor = 1;
-  int32 limit   = 2;
+  enum SortOrder {
+    NEWEST = 0;
+    POPULARITY = 1;
+  }
+  string cursor       = 1;
+  int32 limit         = 2;
+  SortOrder sort_by   = 3;
+  bool include_banned = 4;
 }
 
 message ListCommunitiesResponse {
@@ -168,9 +175,10 @@ service CommunityService {
     };
   }
 
-  rpc Delete(DeleteCommunityRequest) returns (DeleteCommunityResponse) {
+  rpc Archive(ArchiveCommunityRequest) returns (ArchiveCommunityResponse) {
     option (google.api.http) = {
-      delete: "/communities/{community_id}"
+      post: "/communities/{community_id}/archive"
+      body: "*"
     };
   }
 
